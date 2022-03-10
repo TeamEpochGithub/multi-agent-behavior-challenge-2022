@@ -46,7 +46,7 @@ def load_data() -> (dict, dict):
 def visualize_movements(user_train, number_to_class):
     sequence_names = list(user_train['sequences'].keys())
     sequence_key = sequence_names[0]
-    single_sequence = user_train["sequences"][sequence_key]
+    single_sequence = user_train["sequences"]['7MXIWNKUU6VTNGAUDICW']
 
     keypoint_sequence = single_sequence['keypoints']
     filled_sequence = fill_holes(keypoint_sequence)
@@ -56,9 +56,9 @@ def visualize_movements(user_train, number_to_class):
 
     ani = animate_pose_sequence(sequence_key,
                                 filled_sequence,
-                                start_frame=0,
-                                stop_frame=1800,
-                                skip=10,
+                                start_frame=600,
+                                stop_frame=700,
+                                skip=1,
                                 annotation_sequence=annotation_sequence,
                                 class_to_color=class_to_color,
                                 number_to_class=number_to_class)
@@ -240,8 +240,8 @@ def make_sequences():
         labels = value['annotations']
         train_sequences.append(
             Sequence(key, value['keypoints'], labels[0], labels[1][0]))
-    submission_clips = []
+    submission_sequences = []
     for key, value in sub_clips['sequences'].items():
-        submission_clips.append(
+        submission_sequences.append(
             Sequence(key, value['keypoints']))
-    return train_sequences, submission_clips
+    return train_sequences, submission_sequences
