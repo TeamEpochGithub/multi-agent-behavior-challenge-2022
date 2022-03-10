@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from matplotlib import rc
 
+from lib.sequence import Sequence
+
 matplotlib.use("TkAgg")
 rc('animation', html='jshtml')
 
@@ -35,7 +37,7 @@ PATH_SUBMISSION_DATA = "../input/submission_data.npy"
 PATH_USER_TRAIN = "../input/user_train.npy"
 
 
-def load_data():
+def load_data() -> (dict, dict):
     submission_clips = np.load(PATH_SUBMISSION_DATA, allow_pickle=True).item()
     user_train = np.load(PATH_USER_TRAIN, allow_pickle=True).item()
     return submission_clips, user_train
@@ -225,3 +227,21 @@ def validate_submission(submission, submission_clips):
 
     print("All checks passed")
     return True
+
+
+def make_sequences():
+    """
+    2 lists of Sequence instances. train and test
+    :return:
+    """
+    sub_clips, train_data = load_data()
+    train_sequences = []
+    for key, value in train_data['sequences'].items():
+        labels = value['annotations']
+        train_sequences.append(
+            Sequence(key, value['keypoints'], labels[0], labels[1][0]))
+    submission_clips = []
+    for key, value in sub_clips['sequences'].items():
+        submission_clips.append(
+            Sequence(key, value['keypoints']))
+    return train_sequences, submission_clips
