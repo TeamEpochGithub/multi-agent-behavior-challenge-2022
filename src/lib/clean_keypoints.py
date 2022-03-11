@@ -32,8 +32,10 @@ def fix_zero_jump(seq: Sequence) -> None:
                 displacements = []
                 for body_part in range(12):
                     if current_pos[body_part*2] != 0 and current_pos[body_part*2 + 1] != 0:
-                        displacements.append([current_pos[body_part*2] - prev_pos[body_part*2],
-                                              current_pos[body_part*2 + 1] - prev_pos[body_part*2 + 1]])
+                        displacements.append(
+                            [current_pos[body_part*2] - prev_pos[body_part*2],
+                             current_pos[body_part*2 + 1] - prev_pos[body_part*2 + 1]]
+                        )
                 if len(displacements) == 0:
                     avg_disp = np.array([0, 0])
                 else:

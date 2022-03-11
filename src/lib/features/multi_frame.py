@@ -26,7 +26,8 @@ def calc_velocities(seq: Sequence):
 
 def calc_energy(velocities):
     """
-    idea: if a mouse is running during the whole video it might be different from when it made a short sprint
+    idea: if a mouse is running during the whole video,
+        it might be different from when it made a short sprint
     :param velocities: output of calc_velocities function
     :return: average speed over sequence per mouse
     """

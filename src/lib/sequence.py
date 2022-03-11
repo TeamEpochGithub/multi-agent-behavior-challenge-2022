@@ -4,7 +4,8 @@ import numpy as np
 class Sequence:
     def __init__(self, name, seq_array: np.ndarray, chasing_labels=None, light_label=None):
         self.name = name
-        flat = seq_array.reshape((1800, 72))  # 72 = (num mice = 3) x (body parts = 12) x (x, y = 2).
+        # 72 = (num mice = 3) x (body parts = 12) x (x, y = 2)
+        flat = seq_array.reshape((1800, 72))
         self.frames = flat
         self.light_label = light_label
         self.chasing_labels = chasing_labels
@@ -36,5 +37,6 @@ class Sequence:
                  'left forepaw': (mouse[8:10]), 'right forepaw': (mouse[10:12]),
                  'center back': (mouse[12:14]),
                  'left hindpaw': (mouse[14:16]), 'right hindpaw': (mouse[16:18]),
-                 'tail base': (mouse[18:20]), 'tail middle': (mouse[20:22]), 'tail tip': (mouse[22:24])}
+                 'tail base': (mouse[18:20]),
+                 'tail middle': (mouse[20:22]), 'tail tip': (mouse[22:24])}
         return mouse

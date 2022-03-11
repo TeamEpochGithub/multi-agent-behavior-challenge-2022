@@ -50,7 +50,6 @@ def visualize_movements(user_train, number_to_class):
 
     keypoint_sequence = single_sequence['keypoints']
     filled_sequence = fill_holes(keypoint_sequence)
-    masked_data = np.ma.masked_where(keypoint_sequence == 0, keypoint_sequence)
 
     annotation_sequence = None  # single_sequence['annotations']
 
@@ -201,7 +200,7 @@ def validate_submission(submission, submission_clips):
         print("Embeddings too large, max allowed is 128")
         return False
     elif not isinstance(submission['embeddings'][0, 0], np.float32):
-        print(f"Embeddings are not float32")
+        print("Embeddings are not float32")
         return False
 
     total_clip_length = 0
@@ -214,11 +213,11 @@ def validate_submission(submission, submission_clips):
             return False
 
     if not len(submission['embeddings']) == total_clip_length:
-        print(f"Emebddings length doesn't match submission clips total length")
+        print("Emebddings length doesn't match submission clips total length")
         return False
 
     if not np.isfinite(submission['embeddings']).all():
-        print(f"Emebddings contains NaN or infinity")
+        print("Emebddings contains NaN or infinity")
         return False
 
     print("All checks passed")
