@@ -4,22 +4,32 @@ import numpy as np
 class Sequence:
     def __init__(self, name, seq_array: np.ndarray, chasing_labels=None, light_label=None):
         self.name = name
-        flat = seq_array.reshape((1800, 72))  # 72 = (num mice = 3) x (body parts = 12) x (x, y coordinate).
+        flat = seq_array.reshape((1800, 72))  # 72 = (num mice = 3) x (body parts = 12) x (x, y = 2).
         self.frames = flat
         self.light_label = light_label
         self.chasing_labels = chasing_labels
 
-    def get_mouse(self, idx, frame):
+    def get_mouse(self, mouse_idx, frame_idx):
         """
         get first, second or third mouse
-        :param idx: index of mouse
-        :param frame: from which frame
+        :param mouse_idx: index of mouse
+        :param frame_idx: from which frame
         :return: np array with 24 numbers (nose_x, nose_y, left_ear_x, ...)
         """
-        return self.frames[frame][idx * 24:(idx + 1) * 24]
+        return self.frames[frame_idx][mouse_idx * 24:(mouse_idx + 1) * 24]
+
+    def set_mouse(self, mouse_idx, frame_idx, mouse: np.ndarray):
+        if mouse.shape != (24, ):
+            raise ValueError(f"Incorrect mouse shape, expected (24, ), got {mouse.shape}")
+        self.frames[frame_idx][mouse_idx * 24:(mouse_idx + 1) * 24] = mouse
 
     @staticmethod
     def name_mouse(mouse: np.ndarray) -> dict:
+        """
+        generates dict with (x, y) for all named mouse body parts
+        :param mouse: as 24 numbers
+        :return:
+        """
         mouse = {'nose': (mouse[0:2]),
                  'left ear': (mouse[2:4]), 'right ear': (mouse[4:6]),
                  'neck': (mouse[6:8]),

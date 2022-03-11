@@ -5,10 +5,10 @@ from lib.sequence import Sequence
 
 def calc_velocities(seq: Sequence):
     """
-    calculates velocity vectors (displacement of neck) for frames for all 3 mice
+    calculates velocity vectors (displacement of neck per frame) for all 3 mice
     velocity for the 0th frame is assumed the same as for frame 1 (probably better than just zeros)
     :param seq: 1 sequence
-    :return:
+    :return: np array of shape (1800, 3, 2)
     """
     velocities = np.empty((1800, 3, 2))
     for i in range(1, 1800):
@@ -27,9 +27,7 @@ def calc_velocities(seq: Sequence):
 def calc_energy(velocities):
     """
     idea: if a mouse is running during the whole video it might be different from when it made a short sprint
-
-    computes average speed over sequence per mouse
     :param velocities: output of calc_velocities function
-    :return:
+    :return: average speed over sequence per mouse
     """
     return np.mean(np.apply_along_axis(lambda v: np.sqrt(v[0]**2 + v[1]**2), 2, velocities), 0)

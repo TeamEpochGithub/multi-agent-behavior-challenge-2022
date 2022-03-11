@@ -179,10 +179,6 @@ def animate_pose_sequence(video_name, seq, number_to_class, class_to_color, star
     return ani
 
 
-def num_to_text(anno_list, number_to_class):
-    return np.vectorize(number_to_class.get)(anno_list)
-
-
 def validate_submission(submission, submission_clips):
     if not isinstance(submission, dict):
         print("Submission should be dict")
