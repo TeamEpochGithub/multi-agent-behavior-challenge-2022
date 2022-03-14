@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from matplotlib import rc
 
+from lib.sequence import Sequence
+
 matplotlib.use("TkAgg")
 rc('animation', html='jshtml')
 
@@ -35,7 +37,7 @@ PATH_SUBMISSION_DATA = "../input/submission_data.npy"
 PATH_USER_TRAIN = "../input/user_train.npy"
 
 
-def load_data():
+def load_data() -> (dict, dict):
     submission_clips = np.load(PATH_SUBMISSION_DATA, allow_pickle=True).item()
     user_train = np.load(PATH_USER_TRAIN, allow_pickle=True).item()
     return submission_clips, user_train
@@ -44,19 +46,18 @@ def load_data():
 def visualize_movements(user_train, number_to_class):
     sequence_names = list(user_train['sequences'].keys())
     sequence_key = sequence_names[0]
-    single_sequence = user_train["sequences"][sequence_key]
+    single_sequence = user_train["sequences"]['7MXIWNKUU6VTNGAUDICW']
 
     keypoint_sequence = single_sequence['keypoints']
     filled_sequence = fill_holes(keypoint_sequence)
-    masked_data = np.ma.masked_where(keypoint_sequence == 0, keypoint_sequence)
 
     annotation_sequence = None  # single_sequence['annotations']
 
     ani = animate_pose_sequence(sequence_key,
                                 filled_sequence,
-                                start_frame=0,
-                                stop_frame=1800,
-                                skip=10,
+                                start_frame=600,
+                                stop_frame=700,
+                                skip=1,
                                 annotation_sequence=annotation_sequence,
                                 class_to_color=class_to_color,
                                 number_to_class=number_to_class)
@@ -177,10 +178,6 @@ def animate_pose_sequence(video_name, seq, number_to_class, class_to_color, star
     return ani
 
 
-def num_to_text(anno_list, number_to_class):
-    return np.vectorize(number_to_class.get)(anno_list)
-
-
 def validate_submission(submission, submission_clips):
     if not isinstance(submission, dict):
         print("Submission should be dict")
@@ -203,7 +200,7 @@ def validate_submission(submission, submission_clips):
         print("Embeddings too large, max allowed is 128")
         return False
     elif not isinstance(submission['embeddings'][0, 0], np.float32):
-        print(f"Embeddings are not float32")
+        print("Embeddings are not float32")
         return False
 
     total_clip_length = 0
@@ -216,12 +213,30 @@ def validate_submission(submission, submission_clips):
             return False
 
     if not len(submission['embeddings']) == total_clip_length:
-        print(f"Emebddings length doesn't match submission clips total length")
+        print("Emebddings length doesn't match submission clips total length")
         return False
 
     if not np.isfinite(submission['embeddings']).all():
-        print(f"Emebddings contains NaN or infinity")
+        print("Emebddings contains NaN or infinity")
         return False
 
     print("All checks passed")
     return True
+
+
+def make_sequences():
+    """
+    2 lists of Sequence instances. train and test
+    :return:
+    """
+    sub_clips, train_data = load_data()
+    train_sequences = []
+    for key, value in train_data['sequences'].items():
+        labels = value['annotations']
+        train_sequences.append(
+            Sequence(key, value['keypoints'], labels[0], labels[1][0]))
+    submission_sequences = []
+    for key, value in sub_clips['sequences'].items():
+        submission_sequences.append(
+            Sequence(key, value['keypoints']))
+    return train_sequences, submission_sequences
