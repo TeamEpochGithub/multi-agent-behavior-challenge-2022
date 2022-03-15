@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 class Sequence:
@@ -24,8 +25,23 @@ class Sequence:
             raise ValueError(f"Incorrect mouse shape, expected (24, ), got {mouse.shape}")
         self.frames[frame_idx][mouse_idx * 24 : (mouse_idx + 1) * 24] = mouse
 
-    def convert_to_vame(self):
-        pass
+    def convert_to_vame(self, single_mouse_embedding):
+        # Determines if the mice are input into the model one by one
+        single_mouse_embedding = True
+        num_frames = 1800
+        num_mice = 3
+        # Write data header
+        data_arr = [np.repeat(['x', 'y', 'likelihood'], 12)]
+        for mouse in range(num_mice):
+            for f_num in range(num_frames):
+                mouse_kpts = self.get_mouse(0, f_num)
+                likelihood_vals = list(range(2, 24, 2))
+                row = np.insert(mouse_kpts, likelihood_vals, 1.0)
+                data_arr.append(row)
+        data_np_arr = np.array(data_arr)
+        # df = pd.DataFrame(data_np_arr, columns=[''])
+        np.savetxt("file.csv", data_np_arr, delimiter=',')
+        return True
 
     @staticmethod
     def name_mouse(mouse: np.ndarray) -> dict:
