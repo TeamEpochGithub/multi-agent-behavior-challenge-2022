@@ -24,6 +24,9 @@ class Sequence:
             raise ValueError(f"Incorrect mouse shape, expected (24, ), got {mouse.shape}")
         self.frames[frame_idx][mouse_idx * 24:(mouse_idx + 1) * 24] = mouse
 
+    def convert_to_vame(self):
+        pass
+
     @staticmethod
     def name_mouse(mouse: np.ndarray) -> dict:
         """
