@@ -41,8 +41,9 @@ PLOT_MOUSE_START_END = [
     (7, 4),  # legs
 ]
 
-PATH_SUBMISSION_DATA = "../input/submission_data.npy"
-PATH_USER_TRAIN = "../input/user_train.npy"
+data_folder = "data/"
+PATH_SUBMISSION_DATA = f"{data_folder}submission_data.npy"
+PATH_USER_TRAIN = f"{data_folder}user_train.npy"
 
 
 def load_data() -> (dict, dict):
