@@ -13,10 +13,12 @@ def calc_velocities(seq: Sequence):
     velocities = np.empty((1800, 3, 2))
     for i in range(1, 1800):
         for m in range(3):
-            velocities[i][m] = Sequence.name_mouse(seq.get_mouse(m, i))['neck'] \
-                               - Sequence.name_mouse(seq.get_mouse(m, i-1))['neck']
+            velocities[i][m] = (
+                Sequence.name_mouse(seq.get_mouse(m, i))["neck"]
+                - Sequence.name_mouse(seq.get_mouse(m, i - 1))["neck"]
+            )
         if np.any(np.abs(velocities[i]) > 25):
-            print(f'outlier at {i}: \n{velocities[i]}')
+            print(f"outlier at {i}: \n{velocities[i]}")
             print(Sequence.name_mouse(seq.get_mouse(0, i))["neck"])
             print(Sequence.name_mouse(seq.get_mouse(1, i))["neck"])
             print(Sequence.name_mouse(seq.get_mouse(2, i))["neck"])
@@ -31,4 +33,4 @@ def calc_energy(velocities):
     :param velocities: output of calc_velocities function
     :return: average speed over sequence per mouse
     """
-    return np.mean(np.apply_along_axis(lambda v: np.sqrt(v[0]**2 + v[1]**2), 2, velocities), 0)
+    return np.mean(np.apply_along_axis(lambda v: np.sqrt(v[0] ** 2 + v[1] ** 2), 2, velocities), 0)

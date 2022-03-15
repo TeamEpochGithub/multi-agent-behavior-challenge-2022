@@ -9,29 +9,34 @@ https://github.com/LINCellularNeuroscience/VAME
 Licensed under GNU General Public License v3.0
 """
 
-import numpy as np
-import networkx as nx
 import random
+
 import matplotlib
+import networkx as nx
+import numpy as np
 
 matplotlib.use("Qt5Agg")
 from matplotlib import pyplot as plt
 
 
-def hierarchy_pos(G, root=None, width=.5, vert_gap=0.2, vert_loc=0, xcenter=0.5):
-    '''
-    From Joel's answer at https://stackoverflow.com/a/29597209/2966723.  
-    '''
+def hierarchy_pos(G, root=None, width=0.5, vert_gap=0.2, vert_loc=0, xcenter=0.5):
+    """
+    From Joel's answer at https://stackoverflow.com/a/29597209/2966723.
+    """
     if not nx.is_tree(G):
-        raise TypeError('cannot use hierarchy_pos on a graph that is not a tree')
+        raise TypeError("cannot use hierarchy_pos on a graph that is not a tree")
 
     if root is None:
         if isinstance(G, nx.DiGraph):
-            root = next(iter(nx.topological_sort(G)))  # allows back compatibility with nx version 1.11
+            root = next(
+                iter(nx.topological_sort(G))
+            )  # allows back compatibility with nx version 1.11
         else:
             root = random.choice(list(G.nodes))
 
-    def _hierarchy_pos(G, root, width=1., vert_gap=0.2, vert_loc=0, xcenter=0.5, pos=None, parent=None):
+    def _hierarchy_pos(
+        G, root, width=1.0, vert_gap=0.2, vert_loc=0, xcenter=0.5, pos=None, parent=None
+    ):
         if pos is None:
             pos = {root: (xcenter, vert_loc)}
         else:
@@ -44,9 +49,16 @@ def hierarchy_pos(G, root=None, width=.5, vert_gap=0.2, vert_loc=0, xcenter=0.5)
             nextx = xcenter - width / 2 - dx / 2
             for child in children:
                 nextx += dx
-                pos = _hierarchy_pos(G, child, width=dx, vert_gap=vert_gap,
-                                     vert_loc=vert_loc - vert_gap, xcenter=nextx,
-                                     pos=pos, parent=root)
+                pos = _hierarchy_pos(
+                    G,
+                    child,
+                    width=dx,
+                    vert_gap=vert_gap,
+                    vert_loc=vert_loc - vert_gap,
+                    xcenter=nextx,
+                    pos=pos,
+                    parent=root,
+                )
         return pos
 
     return _hierarchy_pos(G, root, width, vert_gap, vert_loc, xcenter)
@@ -64,10 +76,17 @@ def merge_func(transition_matrix, n_cluster, motif_norm, merge_sel):
         for i in range(n_cluster):
             for j in range(n_cluster):
                 try:
-                    cost = (motif_norm[i] + motif_norm[j]) / np.abs(transition_matrix[i, j] + transition_matrix[j, i])
+                    cost = (motif_norm[i] + motif_norm[j]) / np.abs(
+                        transition_matrix[i, j] + transition_matrix[j, i]
+                    )
                 except ZeroDivisionError:
-                    print("Error: Transition probabilities between motif " + str(i) + " and motif " + str(
-                        j) + " are zero.")
+                    print(
+                        "Error: Transition probabilities between motif "
+                        + str(i)
+                        + " and motif "
+                        + str(j)
+                        + " are zero."
+                    )
                 if cost <= cost_temp:
                     cost_temp = cost
                     merge_nodes = (np.array([i]), np.array([j]))
@@ -88,7 +107,7 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
     merging_nodes = []
     hierarchy_nodes = []
     trans_mat_temp = transition_matrix.copy()
-    is_leaf = np.ones((n_cluster), dtype='int')
+    is_leaf = np.ones((n_cluster), dtype="int")
     node_label = []
     leaf_idx = []
 
@@ -109,22 +128,22 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
 
         if is_leaf[nodes[0]] == 1:
             is_leaf[nodes[0]] = 0
-            node_label.append('leaf_left_' + str(i))
+            node_label.append("leaf_left_" + str(i))
             leaf_idx.append(1)
 
         elif is_leaf[nodes[0]] == 0:
-            node_label.append('h_' + str(i) + '_' + str(nodes[0]))
+            node_label.append("h_" + str(i) + "_" + str(nodes[0]))
             leaf_idx.append(0)
 
         if is_leaf[nodes[1]] == 1:
             is_leaf[nodes[1]] = 0
-            node_label.append('leaf_right_' + str(i))
-            hierarchy_nodes.append('h_' + str(i) + '_' + str(nodes[1]))
+            node_label.append("leaf_right_" + str(i))
+            hierarchy_nodes.append("h_" + str(i) + "_" + str(nodes[1]))
             leaf_idx.append(1)
 
         elif is_leaf[nodes[1]] == 0:
-            node_label.append('h_' + str(i) + '_' + str(nodes[1]))
-            hierarchy_nodes.append('h_' + str(i) + '_' + str(nodes[1]))
+            node_label.append("h_" + str(i) + "_" + str(nodes[1]))
+            hierarchy_nodes.append("h_" + str(i) + "_" + str(nodes[1]))
             leaf_idx.append(0)
 
         merging_nodes.append(nodes)
@@ -162,24 +181,24 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
 
     T = nx.Graph()
 
-    T.add_node('Root')
+    T.add_node("Root")
     node_dict = {}
 
     if leaf_idx[-1] == 0:
-        temp_node = 'h_' + str(merge[-1, 1]) + '_' + str(28)
-        T.add_edge(temp_node, 'Root')
+        temp_node = "h_" + str(merge[-1, 1]) + "_" + str(28)
+        T.add_edge(temp_node, "Root")
         node_dict[merge[-1, 1]] = temp_node
 
     if leaf_idx[-1] == 1:
-        T.add_edge(merge[-1, 1], 'Root')
+        T.add_edge(merge[-1, 1], "Root")
 
     if leaf_idx[-2] == 0:
-        temp_node = 'h_' + str(merge[-1, 0]) + '_' + str(28)
-        T.add_edge(temp_node, 'Root')
+        temp_node = "h_" + str(merge[-1, 0]) + "_" + str(28)
+        T.add_edge(temp_node, "Root")
         node_dict[merge[-1, 0]] = temp_node
 
     if leaf_idx[-2] == 1:
-        T.add_edge(merge[-1, 0], 'Root')
+        T.add_edge(merge[-1, 0], "Root")
 
     idx = len(leaf_idx) - 3
 
@@ -204,7 +223,7 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
                 T.add_edge(merge[i, 1], temp_node)
 
         if leaf_idx[idx] == 0:
-            new_node = 'h_' + str(merge[i, 1]) + '_' + str(i)
+            new_node = "h_" + str(merge[i, 1]) + "_" + str(i)
             if merge[i, 1] in node_dict:
                 T.add_edge(node_dict[merge[i, 1]], new_node)
             else:
@@ -215,7 +234,7 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
                 temp_node = new_node
                 node_dict[merge[i, 1]] = new_node
             else:
-                new_node_2 = 'h_' + str(merge[i, 0]) + '_' + str(i)
+                new_node_2 = "h_" + str(merge[i, 0]) + "_" + str(i)
                 #                temp_node = 'h_'+str(merge[i,0])+'_'+str(i)
                 T.add_edge(node_dict[merge[i, 1]], new_node_2)
                 #                node_dict[merge[i,0]] = temp_node
@@ -224,7 +243,7 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
         #                temp_node = new_node
 
         elif leaf_idx[idx - 1] == 0:
-            new_node = 'h_' + str(merge[i, 0]) + '_' + str(i)
+            new_node = "h_" + str(merge[i, 0]) + "_" + str(i)
             if merge[i, 1] in node_dict:
                 T.add_edge(node_dict[merge[i, 1]], new_node)
             else:
@@ -234,7 +253,7 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
             if leaf_idx[idx] == 1:
                 temp_node = new_node
             else:
-                new_node = 'h_' + str(merge[i, 1]) + '_' + str(i)
+                new_node = "h_" + str(merge[i, 1]) + "_" + str(i)
                 T.add_edge(temp_node, new_node)
                 node_dict[merge[i, 1]] = new_node
                 temp_node = new_node
@@ -246,7 +265,7 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
 
 def draw_tree(T):
     # pos = nx.drawing.layout.fruchterman_reingold_layout(T)
-    pos = hierarchy_pos(T, 'Root', width=.5, vert_gap=0.1, vert_loc=0, xcenter=50)
+    pos = hierarchy_pos(T, "Root", width=0.5, vert_gap=0.1, vert_loc=0, xcenter=50)
     fig = plt.figure(2)
     nx.draw_networkx(T, pos)
     figManager = plt.get_current_fig_manager()
@@ -255,11 +274,11 @@ def draw_tree(T):
 
 def traverse_tree(T, root_node=None):
     if root_node == None:
-        node = ['Root']
+        node = ["Root"]
     else:
         node = [root_node]
     traverse_list = []
-    traverse_preorder = '{'
+    traverse_preorder = "{"
 
     def _traverse_tree(T, node, traverse_preorder):
         traverse_preorder += str(node[0])
@@ -274,20 +293,20 @@ def traverse_tree(T, root_node=None):
                     children.remove(child)
 
         if len(children) > 1:
-            traverse_preorder += '{'
-            traverse_preorder_temp = _traverse_tree(T, [children[0]], '')
+            traverse_preorder += "{"
+            traverse_preorder_temp = _traverse_tree(T, [children[0]], "")
             traverse_preorder += traverse_preorder_temp
 
-            traverse_preorder += '}{'
+            traverse_preorder += "}{"
 
-            traverse_preorder_temp = _traverse_tree(T, [children[1]], '')
+            traverse_preorder_temp = _traverse_tree(T, [children[1]], "")
             traverse_preorder += traverse_preorder_temp
-            traverse_preorder += '}'
+            traverse_preorder += "}"
 
         return traverse_preorder
 
     traverse_preorder = _traverse_tree(T, node, traverse_preorder)
-    traverse_preorder += '}'
+    traverse_preorder += "}"
 
     return traverse_preorder
 
@@ -305,33 +324,35 @@ def _traverse_tree(T, node, traverse_preorder, traverse_list):
                 children.remove(child)
 
     if len(children) > 1:
-        traverse_preorder += '{'
-        traverse_preorder_temp = _traverse_tree(T, [children[0]], '', traverse_list)
+        traverse_preorder += "{"
+        traverse_preorder_temp = _traverse_tree(T, [children[0]], "", traverse_list)
         traverse_preorder += traverse_preorder_temp
 
-        traverse_preorder += '}{'
+        traverse_preorder += "}{"
 
-        traverse_preorder_temp = _traverse_tree(T, [children[1]], '', traverse_list)
+        traverse_preorder_temp = _traverse_tree(T, [children[1]], "", traverse_list)
         traverse_preorder += traverse_preorder_temp
-        traverse_preorder += '}'
+        traverse_preorder += "}"
 
     return traverse_preorder
 
 
 def traverse_tree(T, root_node=None):
     if root_node == None:
-        node = ['Root']
+        node = ["Root"]
     else:
         node = [root_node]
     traverse_list = []
-    traverse_preorder = '{'
+    traverse_preorder = "{"
     traverse_preorder = _traverse_tree(T, node, traverse_preorder, traverse_list)
-    traverse_preorder += '}'
+    traverse_preorder += "}"
 
     return traverse_preorder
 
 
-def _traverse_tree_cutline(T, node, traverse_list, cutline, level, community_bag, community_list=None):
+def _traverse_tree_cutline(
+    T, node, traverse_list, cutline, level, community_bag, community_list=None
+):
     cmap = plt.get_cmap("tab10")
     traverse_list.append(node[0])
     if community_list is not None and type(node[0]) is not str:
@@ -346,36 +367,42 @@ def _traverse_tree_cutline(T, node, traverse_list, cutline, level, community_bag
                 children.remove(child)
 
     if len(children) > 1:
-        if nx.shortest_path_length(T, 'Root', node[0]) == cutline:
+        if nx.shortest_path_length(T, "Root", node[0]) == cutline:
             # create new list
             traverse_list1 = []
             traverse_list2 = []
-            community_bag = _traverse_tree_cutline(T, [children[0]], traverse_list, cutline, level + 1, community_bag,
-                                                   traverse_list1)
-            community_bag = _traverse_tree_cutline(T, [children[1]], traverse_list, cutline, level + 1, community_bag,
-                                                   traverse_list2)
+            community_bag = _traverse_tree_cutline(
+                T, [children[0]], traverse_list, cutline, level + 1, community_bag, traverse_list1
+            )
+            community_bag = _traverse_tree_cutline(
+                T, [children[1]], traverse_list, cutline, level + 1, community_bag, traverse_list2
+            )
             joined_list = traverse_list1 + traverse_list2
             community_bag.append(joined_list)
             if type(node[0]) is not str:  # append itself
                 community_bag.append([node[0]])
         else:
-            community_bag = _traverse_tree_cutline(T, [children[0]], traverse_list, cutline, level + 1, community_bag,
-                                                   community_list)
-            community_bag = _traverse_tree_cutline(T, [children[1]], traverse_list, cutline, level + 1, community_bag,
-                                                   community_list)
+            community_bag = _traverse_tree_cutline(
+                T, [children[0]], traverse_list, cutline, level + 1, community_bag, community_list
+            )
+            community_bag = _traverse_tree_cutline(
+                T, [children[1]], traverse_list, cutline, level + 1, community_bag, community_list
+            )
 
     return community_bag
 
 
 def traverse_tree_cutline(T, root_node=None, cutline=2):
     if root_node == None:
-        node = ['Root']
+        node = ["Root"]
     else:
         node = [root_node]
     traverse_list = []
     color_map = []
     community_bag = []
     level = 0
-    community_bag = _traverse_tree_cutline(T, node, traverse_list, cutline, level, color_map, community_bag)
+    community_bag = _traverse_tree_cutline(
+        T, node, traverse_list, cutline, level, color_map, community_bag
+    )
 
     return community_bag
