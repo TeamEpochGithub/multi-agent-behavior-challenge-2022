@@ -129,9 +129,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/data/
-/input
-/data
+data/
+input/
 .idea
 
 # Large media files
