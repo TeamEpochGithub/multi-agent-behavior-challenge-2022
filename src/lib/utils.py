@@ -224,12 +224,13 @@ def validate_submission(submission, submission_clips):
     return True
 
 
-def make_sequences():
+def make_sequences(sub_clips, train_data):
     """
     2 lists of Sequence instances. train and test
     :return:
     """
-    sub_clips, train_data = load_data()
+    if not sub_clips or not train_data:
+        sub_clips, train_data = load_data()
     train_sequences = []
     for key, value in train_data['sequences'].items():
         labels = value['annotations']
