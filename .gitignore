@@ -128,9 +128,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-data/
-input/
 .idea
 
 # Large media files
@@ -138,5 +135,9 @@ input/
 *.mp4
 *.avi
 
+# Large data storage
+src/data/
+src/input/
+
 # VAME image and video results
-results
+results/
