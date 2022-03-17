@@ -15,7 +15,7 @@ import matplotlib
 import networkx as nx
 import numpy as np
 
-matplotlib.use("Qt5Agg")
+# matplotlib.use("Qt5Agg")
 from matplotlib import pyplot as plt
 
 
