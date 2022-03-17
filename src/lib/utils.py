@@ -1,13 +1,12 @@
 import copy
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import animation, rc
 
 from lib.sequence import Sequence
 
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 rc("animation", html="jshtml")
 
 # Note: Image processing may be slow if too many frames are animated.
