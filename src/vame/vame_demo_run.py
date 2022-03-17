@@ -16,18 +16,19 @@ import vame
 working_directory = f"{os.getcwd()}\\projects"
 project = "Epoch-VAME"
 # videos = ['\\multi-agent-behavior-challenge-2022\\src\\vame\\videos']
-videos = []
+today = "Mar17-2022"
+videos = [f"{os.getcwd()}\\..\\data\\videos"]
 
 # Initialize your project
 # Step 1.1:
-config = vame.init_new_project(
-    project=project, videos=videos, working_directory=working_directory, videotype=".mp4"
-)
+# config = vame.init_new_project(
+#     project=project, videos=videos, working_directory=working_directory, videotype=".mp4"
+# )
 
 # After the inital creation of your project you can always access the config.yaml file
 # via specifying the path to your project
 # CHANGE THIS TO THE PATH OF THE VAME PROJECT THAT YOU ARE CURRENTLY WORKING ON
-config = working_directory + "\\" + project + "-Mar15-2022/config.yaml"
+config = working_directory + "\\" + project + f"-{today}/config.yaml"
 
 # As our config.yaml is sometimes still changing a little due to updates, we have here a small function
 # to update your config.yaml to the current state. Be aware that this will overwrite your current config.yaml
@@ -39,19 +40,20 @@ config = working_directory + "\\" + project + "-Mar15-2022/config.yaml"
 # Align your behavior videos egocentric and create training dataset:
 # pose_ref_index: list of reference coordinate indices for alignment
 # Example: 0: snout, 1: forehand_left, 2: forehand_right, 3: hindleft, 4: hindright, 5: tail
-vame.egocentric_alignment(config, pose_ref_index=[0, 5])
+# vame.egocentric_alignment(config, pose_ref_index=[0, 5])
 
 # If your experiment is by design egocentrical (e.g. head-fixed experiment on treadmill etc)
 # you can use the following to convert your .csv to a .npy array, ready to train vame on it
-# vame.csv_to_numpy(config, datapath=f'{working_directory}\\{project}-Mar11-2022\\videos\\pose_estimation\\')
+# vame.csv_to_numpy(config, datapath=f'{working_directory}\\{project}-{today}\\videos\\pose_estimation\\')
 
 # Step 1.3:
 # create the training set for the VAME model
 # vame.create_trainset(config)
-
+import torch
+print(torch.cuda.is_available())
 # Step 2:
 # Train VAME:
-# vame.train_model(config)
+vame.train_model(config)
 
 # Step 3:
 # Evaluate model
