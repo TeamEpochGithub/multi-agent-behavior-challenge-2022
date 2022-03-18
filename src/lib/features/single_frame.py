@@ -53,8 +53,7 @@ def calc_mouse_length(frame: np.ndarray) -> np.ndarray(dtype=float, shape=(3)):
             Sequence.mouse_from_frame(frame, 2)]
     lengths = np.zeros((3), dtype=float)
     for m in range(3):
-        lengths[m] = np.linalg.norm(Sequence.name_mouse(mice[m])['nose'] \
-                                    - Sequence.name_mouse(mice[m])['tail base'])
+        lengths[m] = np.linalg.norm(Sequence.name_mouse(mice[m])['nose'] - Sequence.name_mouse(mice[m])['tail base'])
     return lengths
 
 
@@ -72,8 +71,8 @@ def calc_mean_reach(frame: np.ndarray) -> np.ndarray(dtype=float, shape=(3)):
         distances = []
         for keypoint in Sequence.name_mouse(mice[m]):
             if keypoint not in ['center back', 'tail middle', 'tail tip']:
-                distances.append(np.linalg.norm(Sequence.name_mouse(mice[m])[keypoint] \
-                                                - Sequence.name_mouse(mice[m])['center back']))
+                distances.append(np.linalg.norm(
+                    Sequence.name_mouse(mice[m])[keypoint] - Sequence.name_mouse(mice[m])['center back']))
         reach[m] = np.mean(distances)
 
     return reach
@@ -103,7 +102,8 @@ def calc_head_angle(frame: np.ndarray) -> np.ndarray(dtype=float, shape=(3)):
         head_direction_norm = np.linalg.norm(head_direction)
 
         if body_direction_norm != 0 and head_direction_norm != 0:
-            dot_product = np.dot(body_direction, head_direction) / body_direction_norm / head_direction_norm
+            dot_product = np.dot(body_direction, head_direction) / \
+                          body_direction_norm / head_direction_norm
             dot_product = np.clip(dot_product, -1, 1)
             angle = np.arccos(dot_product)
             result[m] = angle
