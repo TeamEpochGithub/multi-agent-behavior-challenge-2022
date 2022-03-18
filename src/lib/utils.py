@@ -1,7 +1,9 @@
 import copy
+import itertools
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from matplotlib import animation, rc
 
 from lib.sequence import Sequence
@@ -40,8 +42,9 @@ PLOT_MOUSE_START_END = [
     (7, 4),  # legs
 ]
 
-PATH_SUBMISSION_DATA = "../input/submission_data.npy"
-PATH_USER_TRAIN = "../input/user_train.npy"
+data_folder = "../data"
+PATH_SUBMISSION_DATA = f"{data_folder}/submission_data.npy"
+PATH_USER_TRAIN = f"{data_folder}/user_train.npy"
 
 
 def load_data() -> (dict, dict):
@@ -253,3 +256,37 @@ def make_sequences(sub_clips, train_data):
     for key, value in sub_clips["sequences"].items():
         submission_sequences.append(Sequence(key, value["keypoints"]))
     return train_sequences, submission_sequences
+
+
+def convert_seqs_to_vame(sequences: [Sequence]) -> pd.DataFrame:
+    """
+    Convert list of Sequences into a complete VAME DataFrame
+    :param sequences: list of sequences
+    :return: VAME compatible dataframe
+    """
+    n_s = len(sequences)
+    vame_data = np.zeros((n_s, 5400, 36))
+    for idx, seq in enumerate(sequences):
+        vame_data[idx, :, :] = seq.convert_to_vame_frame(seq)
+
+    vame_data = np.reshape(vame_data, (n_s * 5400, 36))
+
+    top = [f"vame-{n_s}sequences"]
+    mouse_kpt_names = [
+        "nose",
+        "left ear",
+        "right ear",
+        "neck",
+        "left forepaw",
+        "right forepaw",
+        "center back",
+        "left hindpaw",
+        "right hindpaw",
+        "tail base",
+        "tail middle",
+        "tail tip",
+    ]
+    x_y_l = ["x", "y", "likelihood"]
+
+    v_d_cols = pd.MultiIndex.from_tuples(itertools.product(top, mouse_kpt_names, x_y_l))
+    return pd.DataFrame(data=vame_data, columns=v_d_cols)

@@ -31,10 +31,12 @@ def fix_zero_jump(seq: Sequence) -> None:
                 # compute avg displacement of valid points
                 displacements = []
                 for body_part in range(12):
-                    if current_pos[body_part*2] != 0 and current_pos[body_part*2 + 1] != 0:
+                    if current_pos[body_part * 2] != 0 and current_pos[body_part * 2 + 1] != 0:
                         displacements.append(
-                            [current_pos[body_part*2] - prev_pos[body_part*2],
-                             current_pos[body_part*2 + 1] - prev_pos[body_part*2 + 1]]
+                            [
+                                current_pos[body_part * 2] - prev_pos[body_part * 2],
+                                current_pos[body_part * 2 + 1] - prev_pos[body_part * 2 + 1],
+                            ]
                         )
                 if len(displacements) == 0:
                     avg_disp = np.array([0, 0])
@@ -43,8 +45,8 @@ def fix_zero_jump(seq: Sequence) -> None:
 
                 # fix broken points
                 for body_part in range(12):
-                    if current_pos[body_part*2] == 0 or current_pos[body_part*2 + 1] == 0:
-                        current_pos[body_part*2] = prev_pos[body_part*2] + avg_disp[0]
-                        current_pos[body_part*2 + 1] = prev_pos[body_part*2 + 1] + avg_disp[1]
+                    if current_pos[body_part * 2] == 0 or current_pos[body_part * 2 + 1] == 0:
+                        current_pos[body_part * 2] = prev_pos[body_part * 2] + avg_disp[0]
+                        current_pos[body_part * 2 + 1] = prev_pos[body_part * 2 + 1] + avg_disp[1]
 
                 seq.set_mouse(m, f, current_pos)
