@@ -17,7 +17,7 @@ class Sequence:
         :param frame_idx: from which frame
         :return: np array with 24 numbers (nose_x, nose_y, left_ear_x, ...)
         """
-        return self.frames[frame_idx][mouse_idx * 24 : (mouse_idx + 1) * 24]
+        return Sequence.mouse_from_frame(self.frames[frame_idx], mouse_idx)
 
     def set_mouse(self, mouse_idx, frame_idx, mouse: np.ndarray):
         if mouse.shape != (24,):
@@ -49,6 +49,10 @@ class Sequence:
                 row = np.insert(mouse_kpts, likelihood_vals, 1.0)
                 data_arr[data_idx, :] = row
         return data_arr
+
+    @staticmethod
+    def mouse_from_frame(frame: np.ndarray, mouse_idx) -> np.ndarray:
+        return frame[mouse_idx * 24 : (mouse_idx + 1) * 24]
 
     @staticmethod
     def name_mouse(mouse: np.ndarray) -> dict:

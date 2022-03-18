@@ -1,3 +1,5 @@
+from typing import Callable
+
 import numpy as np
 
 from lib.sequence import Sequence
@@ -34,3 +36,16 @@ def calc_energy(velocities):
     :return: average speed over sequence per mouse
     """
     return np.mean(np.apply_along_axis(lambda v: np.sqrt(v[0] ** 2 + v[1] ** 2), 2, velocities), 0)
+
+
+def apply_single_frame(seq: Sequence, func: Callable) -> np.ndarray:
+    """
+    Runs a single-frame feature on all frames of the given sequence
+    :param seq:
+    :param func:
+    :return: np array of size (amount_of_frames x return_shape_of_func)
+    """
+    results = []
+    for i in range(len(seq.frames)):
+        results.append(func(seq.frames[i]))
+    return np.array(results)
