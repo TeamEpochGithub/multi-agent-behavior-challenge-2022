@@ -63,7 +63,7 @@ vame.train_model(config)
 
 # Step 3:
 # Evaluate model
-# vame.evaluate_model(config)
+vame.evaluate_model(config)
 
 # Step 4:
 # Segment motifs/pose

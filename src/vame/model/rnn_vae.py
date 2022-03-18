@@ -278,10 +278,15 @@ def test(
         )
     )
 
-    return mse_loss / idx, test_loss / idx, kl_weight * kmeans_losses
+    return (
+        mse_loss / idx,
+        test_loss / idx,
+        kl_weight * kmeans_losses,
+        BETA * kl_weight * kullback_loss / idx,
+    )
 
 
-def train_model(config):
+def train_model(config, live_logging=False):
     config_file = Path(config).resolve()
     cfg = read_config(config_file)
     legacy = cfg["legacy"]
@@ -489,7 +494,7 @@ def train_model(config):
             noise,
         )
 
-        current_loss, test_loss, test_list = test(
+        mse_test_loss, test_loss, kmeans_test_loss, kl_test_loss = test(
             test_loader,
             epoch,
             model,
@@ -503,6 +508,9 @@ def train_model(config):
             FUTURE_DECODER,
             TEST_BATCH_SIZE,
         )
+        if live_logging:
+            # Epoch, Train losses, Test losses
+            yield epoch, weight, train_loss, km_loss, kl_loss, mse_loss, fut_loss, mse_test_loss, test_loss, kmeans_test_loss, kl_test_loss
 
         # logging losses
         train_losses.append(train_loss)
@@ -514,8 +522,8 @@ def train_model(config):
         fut_losses.append(fut_loss)
 
         # save best model
-        if weight > 0.99 and current_loss <= BEST_LOSS:
-            BEST_LOSS = current_loss
+        if weight > 0.99 and mse_test_loss <= BEST_LOSS:
+            BEST_LOSS = mse_test_loss
             print("Saving model!")
 
             if use_gpu:
@@ -609,7 +617,7 @@ def train_model(config):
             os.path.join(
                 cfg["project_path"], "model", "model_losses", "mse_test_losses_" + model_name
             ),
-            current_loss,
+            mse_test_loss,
         )
         np.save(
             os.path.join(cfg["project_path"], "model", "model_losses", "fut_losses_" + model_name),
