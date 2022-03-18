@@ -258,10 +258,15 @@ def make_sequences(sub_clips, train_data):
     return train_sequences, submission_sequences
 
 
-def convert_seqs_to_vame(sequences: [Sequence], n_s=10) -> pd.DataFrame:
+def convert_seqs_to_vame(sequences: [Sequence]) -> pd.DataFrame:
+    """
+    Convert list of Sequences into a complete VAME DataFrame
+    :param sequences: list of sequences
+    :return: VAME compatible dataframe
+    """
+    n_s = len(sequences)
     vame_data = np.zeros((n_s, 5400, 36))
-
-    for idx, seq in enumerate(sequences[0:n_s]):
+    for idx, seq in enumerate(sequences):
         vame_data[idx, :, :] = seq.convert_to_vame_frame(seq)
 
     vame_data = np.reshape(vame_data, (n_s * 5400, 36))
