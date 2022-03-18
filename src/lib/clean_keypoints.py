@@ -21,7 +21,8 @@ def fix_zero_jump(seq: Sequence) -> None:
                 seq.set_mouse(m, 0, seq.get_mouse(m, f))
                 break
             if f == seq.frames.shape[0] - 1:
-                raise ValueError("encountered a zero in all mouse positions")
+                print("encountered a zero in all mouse positions, keeping original")
+                return
 
     for f in range(1, seq.frames.shape[0]):
         for m in range(3):
