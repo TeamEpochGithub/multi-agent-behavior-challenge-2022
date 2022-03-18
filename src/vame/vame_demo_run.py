@@ -44,12 +44,13 @@ config = working_directory + "\\" + project + f"-{today}/config.yaml"
 # Align your behavior videos egocentric and create training dataset:
 # pose_ref_index: list of reference coordinate indices for alignment
 # Example: 0: snout, 1: forehand_left, 2: forehand_right, 3: hindleft, 4: hindright, 5: tail
-# vame.egocentric_alignment(config, pose_ref_index=[0, 5])
+vame.egocentric_alignment(config, pose_ref_index=[0, 5])
 
 # If your experiment is by design egocentrical (e.g. head-fixed experiment on treadmill etc)
 # you can use the following to convert your .csv to a .npy array, ready to train vame on it
-# vame.csv_to_numpy(config, datapath=f'{working_directory}\\{project}-{
-# today}\\videos\\pose_estimation\\')
+vame.csv_to_numpy(
+    config, datapath=f"{working_directory}\\{project}-" f"{today}\\videos\\pose_estimation\\"
+)
 
 # Step 1.3:
 # create the training set for the VAME model

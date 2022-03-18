@@ -1,7 +1,9 @@
 import copy
+import itertools
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from matplotlib import animation, rc
 
 from lib.sequence import Sequence
@@ -254,3 +256,32 @@ def make_sequences(sub_clips, train_data):
     for key, value in sub_clips["sequences"].items():
         submission_sequences.append(Sequence(key, value["keypoints"]))
     return train_sequences, submission_sequences
+
+
+def convert_seqs_to_vame(sequences: [Sequence], n_s=10) -> pd.DataFrame:
+    vame_data = np.zeros((n_s, 5400, 36))
+
+    for idx, seq in enumerate(sequences[0:n_s]):
+        vame_data[idx, :, :] = seq.convert_to_vame_frame(seq)
+
+    vame_data = np.reshape(vame_data, (n_s * 5400, 36))
+
+    top = [f"vame-{n_s}sequences"]
+    mouse_kpt_names = [
+        "nose",
+        "left ear",
+        "right ear",
+        "neck",
+        "left forepaw",
+        "right forepaw",
+        "center back",
+        "left hindpaw",
+        "right hindpaw",
+        "tail base",
+        "tail middle",
+        "tail tip",
+    ]
+    x_y_l = ["x", "y", "likelihood"]
+
+    v_d_cols = pd.MultiIndex.from_tuples(itertools.product(top, mouse_kpt_names, x_y_l))
+    return pd.DataFrame(data=vame_data, columns=v_d_cols)

@@ -24,22 +24,31 @@ class Sequence:
             raise ValueError(f"Incorrect mouse shape, expected (24, ), got {mouse.shape}")
         self.frames[frame_idx][mouse_idx * 24 : (mouse_idx + 1) * 24] = mouse
 
-    def convert_to_vame(self, single_mouse_embedding):
-        # Determines if the mice are input into the model one by one
+    def convert_to_vame_frame(self, single_mouse_embedding: bool) -> np.ndarray:
+        """
+        Converts the sequence instance into a vame-compatible 2d numpy array
+        :param single_mouse_embedding: true to isolate individual mice,
+        false to convert them all at the same time.
+        :return: the numpy array
+        """
+        # If true, returns (5400, 36) array, otherwise returns (1800, 108)
+        if not single_mouse_embedding:
+            # For now not implemented
+            return np.zeros(0)
         num_frames = 1800
         num_mice = 3
-        # Write data header
-        data_arr = [np.repeat(["x", "y", "likelihood"], 12)]
-        for mouse in range(num_mice):
+        # 3 mice * 1800 frames = 5400, 3 cols * 12 keypoints = 36
+        data_arr = np.zeros((5400, 36))
+        for mouse_idx in range(num_mice):
             for f_num in range(num_frames):
-                mouse_kpts = self.get_mouse(0, f_num)
-                likelihood_vals = list(range(2, 24, 2))
+                # Indexing data_arr
+                data_idx = f_num + mouse_idx * num_frames
+                # Getting keypoints
+                mouse_kpts = self.get_mouse(mouse_idx, f_num)
+                likelihood_vals = list(range(2, 24 + 1, 2))
                 row = np.insert(mouse_kpts, likelihood_vals, 1.0)
-                data_arr.append(row)
-        data_np_arr = np.array(data_arr)
-        # df = pd.DataFrame(data_np_arr, columns=[''])
-        np.savetxt("file.csv", data_np_arr, delimiter=",")
-        return True
+                data_arr[data_idx, :] = row
+        return data_arr
 
     @staticmethod
     def name_mouse(mouse: np.ndarray) -> dict:
