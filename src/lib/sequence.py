@@ -17,12 +17,16 @@ class Sequence:
         :param frame_idx: from which frame
         :return: np array with 24 numbers (nose_x, nose_y, left_ear_x, ...)
         """
-        return self.frames[frame_idx][mouse_idx * 24:(mouse_idx + 1) * 24]
+        return Sequence.mouse_from_frame(self.frames[frame_idx], mouse_idx)
 
     def set_mouse(self, mouse_idx, frame_idx, mouse: np.ndarray):
         if mouse.shape != (24, ):
             raise ValueError(f"Incorrect mouse shape, expected (24, ), got {mouse.shape}")
         self.frames[frame_idx][mouse_idx * 24:(mouse_idx + 1) * 24] = mouse
+
+    @staticmethod
+    def mouse_from_frame(frame: np.ndarray, mouse_idx) -> np.ndarray:
+        return frame[mouse_idx * 24:(mouse_idx + 1) * 24]
 
     @staticmethod
     def name_mouse(mouse: np.ndarray) -> dict:
