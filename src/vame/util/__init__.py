@@ -10,6 +10,13 @@ Licensed under GNU General Public License v3.0
 """
 import sys
 
+from vame.util.auxiliary import create_config_template, read_config, update_config, write_config
+
 sys.dont_write_bytecode = True
 
-from vame.util.auxiliary import *
+__all__ = [
+    "create_config_template",
+    "read_config",
+    "write_config",
+    "update_config",
+]

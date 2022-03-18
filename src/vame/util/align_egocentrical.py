@@ -81,7 +81,6 @@ def nan_helper(y):
 
 # Interpolates all nan values of given array
 def interpol(arr):
-
     y = np.transpose(arr)
 
     nans, x = nan_helper(y[0])
@@ -147,7 +146,6 @@ def align_mouse(
     frame_count,
     use_video=True,
 ):
-
     # returns: list of cropped images (if video is used) and list of cropped DLC points
     #
     # parameters:
@@ -192,7 +190,7 @@ def align_mouse(
                 frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
                 frame = frame - bg
                 frame[frame <= 0] = 0
-            except:
+            except Exception:
                 print("Couldn't find a frame in capture.read(). #Frame: %d" % idx)
                 continue
         else:
@@ -265,7 +263,7 @@ def play_aligned_video(a, n, frame_count):
     for i in range(frame_count):
         # Capture frame-by-frame
         ret, frame = True, a[i]
-        if ret == True:
+        if ret is True:
 
             # Display the resulting frame
             frame = cv.cvtColor(frame.astype("uint8") * 255, cv.COLOR_GRAY2BGR)
@@ -296,7 +294,6 @@ def alignment(
     use_video=False,
     check_video=False,
 ):
-
     # read out data
     data = pd.read_csv(
         os.path.join(path_to_file, "videos", "pose_estimation", filename + ".csv"), skiprows=2
@@ -393,6 +390,7 @@ def egocentric_alignment(
         np.save(
             os.path.join(path_to_file, "data", file, file + "-PE-seq.npy"), egocentric_time_series
         )
-    #        np.save(os.path.join(path_to_file,'data/',file,"",file+'-PE-seq.npy', egocentric_time_series))
+    #        np.save(os.path.join(path_to_file,'data/',file,"",file+'-PE-seq.npy',
+    #        egocentric_time_series))
 
     print("Your data is now ine right format and you can call vame.create_trainset()")

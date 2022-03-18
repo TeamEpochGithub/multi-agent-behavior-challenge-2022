@@ -10,6 +10,10 @@ Licensed under GNU General Public License v3.0
 """
 import sys
 
+from vame.initialize_project.new import init_new_project
+
 sys.dont_write_bytecode = True
 
-from vame.initialize_project.new import init_new_project
+__init__ = [
+    "init_new_project",
+]

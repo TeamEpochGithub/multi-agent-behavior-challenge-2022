@@ -10,6 +10,8 @@ Licensed under GNU General Public License v3.0
 """
 import os
 
+import torch
+
 import vame
 
 # These paths have to be set manually
@@ -30,8 +32,10 @@ videos = [f"{os.getcwd()}\\..\\data\\videos"]
 # CHANGE THIS TO THE PATH OF THE VAME PROJECT THAT YOU ARE CURRENTLY WORKING ON
 config = working_directory + "\\" + project + f"-{today}/config.yaml"
 
-# As our config.yaml is sometimes still changing a little due to updates, we have here a small function
-# to update your config.yaml to the current state. Be aware that this will overwrite your current config.yaml
+# As our config.yaml is sometimes still changing a little due to updates, we have here a small
+# function
+# to update your config.yaml to the current state. Be aware that this will overwrite your
+# current config.yaml
 # and make sure to back up your version if you did parameter changes!
 # NO NEED TO RUN THIS FOR US
 # vame.update_config(config)
@@ -44,12 +48,13 @@ config = working_directory + "\\" + project + f"-{today}/config.yaml"
 
 # If your experiment is by design egocentrical (e.g. head-fixed experiment on treadmill etc)
 # you can use the following to convert your .csv to a .npy array, ready to train vame on it
-# vame.csv_to_numpy(config, datapath=f'{working_directory}\\{project}-{today}\\videos\\pose_estimation\\')
+# vame.csv_to_numpy(config, datapath=f'{working_directory}\\{project}-{
+# today}\\videos\\pose_estimation\\')
 
 # Step 1.3:
 # create the training set for the VAME model
 # vame.create_trainset(config)
-import torch
+
 print(torch.cuda.is_available())
 # Step 2:
 # Train VAME:
@@ -83,7 +88,8 @@ vame.train_model(config)
 # OPTIONAL: Use the generative model (reconstruction decoder) to sample from
 # the learned data distribution, reconstruct random real samples or visualize
 # the cluster center for validation
-# vame.generative_model(config, mode="centers")  # options: mode: "sampling", "reconstruction", "centers", "motifs"
+# vame.generative_model(config, mode="centers")  # options: mode: "sampling", "reconstruction",
+# "centers", "motifs"
 
 # OPTIONAL: Create a video of an egocentrically aligned mouse + path through
 # the community space (similar to our gif on github) to learn more about your representation

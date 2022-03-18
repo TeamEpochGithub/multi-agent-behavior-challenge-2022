@@ -28,7 +28,7 @@ def load_model(cfg, model_name, legacy):
     TEMPORAL_WINDOW = cfg["time_window"] * 2
     FUTURE_STEPS = cfg["prediction_steps"]
     NUM_FEATURES = cfg["num_features"]
-    if legacy == False:
+    if legacy is False:
         NUM_FEATURES = NUM_FEATURES - 2
     hidden_size_layer_1 = cfg["hidden_size_layer_1"]
     hidden_size_layer_2 = cfg["hidden_size_layer_2"]
@@ -39,7 +39,7 @@ def load_model(cfg, model_name, legacy):
     dropout_pred = cfg["dropout_pred"]
     softplus = cfg["softplus"]
 
-    if legacy == False:
+    if legacy is False:
         print("Load model... ")
         model = RNN_VAE(
             TEMPORAL_WINDOW,
@@ -93,7 +93,7 @@ def embedd_latent_vectors(cfg, files, model, legacy):
     project_path = cfg["project_path"]
     temp_win = cfg["time_window"]
     num_features = cfg["num_features"]
-    if legacy == False:
+    if legacy is False:
         num_features = num_features - 2
 
     latent_vector_files = []
@@ -211,7 +211,7 @@ def pose_segmentation(config):
 
     print("Pose segmentation for VAME model: %s \n" % model_name)
 
-    if legacy == True:
+    if legacy is True:
         from segment_behavior import behavior_segmentation
 
         behavior_segmentation(
@@ -269,10 +269,10 @@ def pose_segmentation(config):
             model = load_model(cfg, model_name, legacy)
             latent_vectors = embedd_latent_vectors(cfg, files, model, legacy)
 
-            if ind_param == False:
+            if ind_param is False:
                 print(
-                    "For all animals the same k-Means parameterization of latent vectors is applied for %d cluster"
-                    % n_cluster
+                    "For all animals the same k-Means parameterization of latent vectors is "
+                    "applied for %d cluster" % n_cluster
                 )
                 labels, cluster_center, motif_usages = same_parameterization(
                     cfg, files, latent_vectors, n_cluster
@@ -300,7 +300,8 @@ def pose_segmentation(config):
                 )
             ):
                 flag = input(
-                    "WARNING: A parameterization for the chosen cluster size of the model already exists! \n"
+                    "WARNING: A parameterization for the chosen cluster size of the model "
+                    "already exists! \n"
                     "Do you want to continue? A new k-Means assignment will be computed! (yes/no) "
                 )
             else:
@@ -318,10 +319,10 @@ def pose_segmentation(config):
                     )
                     latent_vectors.append(latent_vector)
 
-                if ind_param == False:
+                if ind_param is False:
                     print(
-                        "For all animals the same k-Means parameterization of latent vectors is applied for %d cluster"
-                        % n_cluster
+                        "For all animals the same k-Means parameterization of latent vectors is "
+                        "applied for %d cluster" % n_cluster
                     )
                     labels, cluster_center, motif_usages = same_parameterization(
                         cfg, files, latent_vectors, n_cluster
@@ -340,7 +341,7 @@ def pose_segmentation(config):
                 new = False
 
         # print("Hello2")
-        if new == True:
+        if new is True:
             for idx, file in enumerate(files):
                 print(
                     os.path.join(
@@ -387,7 +388,10 @@ def pose_segmentation(config):
                 np.save(os.path.join(save_data, "motif_usage_" + file), motif_usages[idx])
 
             print(
-                "You succesfully extracted motifs with VAME! From here, you can proceed running vame.motif_videos() "
-                "to get an idea of the behavior captured by VAME. This will leave you with short snippets of certain movements."
-                "To get the full picture of the spatiotemporal dynamic we recommend applying our community approach afterwards."
+                "You succesfully extracted motifs with VAME! From here, you can proceed running "
+                "vame.motif_videos() "
+                "to get an idea of the behavior captured by VAME. This will leave you with short "
+                "snippets of certain movements."
+                "To get the full picture of the spatiotemporal dynamic we recommend applying our "
+                "community approach afterwards."
             )

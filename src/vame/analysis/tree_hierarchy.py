@@ -11,7 +11,6 @@ Licensed under GNU General Public License v3.0
 
 import random
 
-import matplotlib
 import networkx as nx
 import numpy as np
 
@@ -266,49 +265,48 @@ def graph_to_tree(motif_usage, transition_matrix, n_cluster, merge_sel=1):
 def draw_tree(T):
     # pos = nx.drawing.layout.fruchterman_reingold_layout(T)
     pos = hierarchy_pos(T, "Root", width=0.5, vert_gap=0.1, vert_loc=0, xcenter=50)
-    fig = plt.figure(2)
     nx.draw_networkx(T, pos)
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
 
 
-def traverse_tree(T, root_node=None):
-    if root_node == None:
-        node = ["Root"]
-    else:
-        node = [root_node]
-    traverse_list = []
-    traverse_preorder = "{"
-
-    def _traverse_tree(T, node, traverse_preorder):
-        traverse_preorder += str(node[0])
-        traverse_list.append(node[0])
-        children = list(T.neighbors(node[0]))
-
-        if len(children) == 3:
-            #        print(children)
-            for child in children:
-                if child in traverse_list:
-                    #                    print(child)
-                    children.remove(child)
-
-        if len(children) > 1:
-            traverse_preorder += "{"
-            traverse_preorder_temp = _traverse_tree(T, [children[0]], "")
-            traverse_preorder += traverse_preorder_temp
-
-            traverse_preorder += "}{"
-
-            traverse_preorder_temp = _traverse_tree(T, [children[1]], "")
-            traverse_preorder += traverse_preorder_temp
-            traverse_preorder += "}"
-
-        return traverse_preorder
-
-    traverse_preorder = _traverse_tree(T, node, traverse_preorder)
-    traverse_preorder += "}"
-
-    return traverse_preorder
+# def traverse_tree(T, root_node=None):
+#     if root_node is None:
+#         node = ["Root"]
+#     else:
+#         node = [root_node]
+#     traverse_list = []
+#     traverse_preorder = "{"
+#
+#     def _traverse_tree(T, node, traverse_preorder):
+#         traverse_preorder += str(node[0])
+#         traverse_list.append(node[0])
+#         children = list(T.neighbors(node[0]))
+#
+#         if len(children) == 3:
+#             #        print(children)
+#             for child in children:
+#                 if child in traverse_list:
+#                     #                    print(child)
+#                     children.remove(child)
+#
+#         if len(children) > 1:
+#             traverse_preorder += "{"
+#             traverse_preorder_temp = _traverse_tree(T, [children[0]], "")
+#             traverse_preorder += traverse_preorder_temp
+#
+#             traverse_preorder += "}{"
+#
+#             traverse_preorder_temp = _traverse_tree(T, [children[1]], "")
+#             traverse_preorder += traverse_preorder_temp
+#             traverse_preorder += "}"
+#
+#         return traverse_preorder
+#
+#     traverse_preorder = _traverse_tree(T, node, traverse_preorder)
+#     traverse_preorder += "}"
+#
+#     return traverse_preorder
 
 
 def _traverse_tree(T, node, traverse_preorder, traverse_list):
@@ -338,7 +336,7 @@ def _traverse_tree(T, node, traverse_preorder, traverse_list):
 
 
 def traverse_tree(T, root_node=None):
-    if root_node == None:
+    if root_node is None:
         node = ["Root"]
     else:
         node = [root_node]
@@ -353,7 +351,6 @@ def traverse_tree(T, root_node=None):
 def _traverse_tree_cutline(
     T, node, traverse_list, cutline, level, community_bag, community_list=None
 ):
-    cmap = plt.get_cmap("tab10")
     traverse_list.append(node[0])
     if community_list is not None and type(node[0]) is not str:
         community_list.append(node[0])
@@ -393,7 +390,7 @@ def _traverse_tree_cutline(
 
 
 def traverse_tree_cutline(T, root_node=None, cutline=2):
-    if root_node == None:
+    if root_node is None:
         node = ["Root"]
     else:
         node = [root_node]

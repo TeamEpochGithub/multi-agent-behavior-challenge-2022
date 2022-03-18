@@ -92,7 +92,8 @@ def plot_loss(cfg, filepath, model_name):
     test_loss = np.load(os.path.join(basepath, "test_losses_" + model_name + ".npy"))
     mse_loss_train = np.load(os.path.join(basepath, "mse_train_losses_" + model_name + ".npy"))
     mse_loss_test = np.load(os.path.join(basepath, "mse_test_losses_" + model_name + ".npy"))
-    #    km_loss = np.load(os.path.join(basepath,'kmeans_losses_'+model_name+'.npy'), allow_pickle=True)
+    #    km_loss = np.load(os.path.join(basepath,'kmeans_losses_'+model_name+'.npy'),
+    #    allow_pickle=True)
     km_losses = np.load(os.path.join(basepath, "kmeans_losses_" + model_name + ".npy"))
     kl_loss = np.load(os.path.join(basepath, "kl_losses_" + model_name + ".npy"))
     fut_loss = np.load(os.path.join(basepath, "fut_losses_" + model_name + ".npy"))
@@ -126,10 +127,9 @@ def eval_temporal(cfg, use_gpu, model_name, legacy):
     TEMPORAL_WINDOW = cfg["time_window"] * 2
     FUTURE_STEPS = cfg["prediction_steps"]
     NUM_FEATURES = cfg["num_features"]
-    if legacy == False:
+    if legacy is False:
         NUM_FEATURES = NUM_FEATURES - 2
     TEST_BATCH_SIZE = 64
-    PROJECT_PATH = cfg["project_path"]
     hidden_size_layer_1 = cfg["hidden_size_layer_1"]
     hidden_size_layer_2 = cfg["hidden_size_layer_2"]
     hidden_size_rec = cfg["hidden_size_rec"]
@@ -242,7 +242,8 @@ def evaluate_model(config):
     eval_temporal(cfg, use_gpu, model_name, legacy)
 
     print(
-        "You can find the results of the evaluation in '/Your-VAME-Project-Apr30-2020/model/evaluate/' \n"
+        "You can find the results of the evaluation in "
+        "'/Your-VAME-Project-Apr30-2020/model/evaluate/' \n"
         "OPTIONS:\n"
         "- vame.behavior_segmentation() to identify behavioral motifs.\n"
         "- re-run the model for further fine tuning. Check again with vame.evaluate_model()"

@@ -27,7 +27,8 @@ import yaml
 
 def create_config_template():
     """
-    Creates a template for config.yaml file. This specific order is preserved while saving as yaml file.
+    Creates a template for config.yaml file. This specific order is preserved while saving as
+    yaml file.
     """
     import ruamel.yaml
 
@@ -148,7 +149,8 @@ def read_config(configname):
 
     else:
         raise FileNotFoundError(
-            "Config file is not found. Please make sure that the file exists and/or that you passed the path of the config file correctly!"
+            "Config file is not found. Please make sure that the file exists and/or that you "
+            "passed the path of the config file correctly!"
         )
     return cfg
 
@@ -178,7 +180,8 @@ def update_config(config):
 
     flag = input(
         "ATTENTION! You are about to overwrite your current config.yaml. If you did changes, "
-        "back up your current version and compare to the updated version. Do you want to continue? (yes/no)"
+        "back up your current version and compare to the updated version. Do you want to "
+        "continue? (yes/no)"
     )
 
     if flag == "yes":

@@ -25,7 +25,6 @@ from vame.util.gif_pose_helper import get_animal_frames
 
 def create_video(path_to_file, file, embed, clabel, frames, start, length, max_lag, num_points):
     # set matplotlib colormap
-    cmap = matplotlib.cm.gray
     cmap_reversed = matplotlib.cm.get_cmap("gray_r")
 
     # this here generates every frame for your gif. The gif is lastly created by using ImageJ
@@ -124,7 +123,7 @@ def gif(
             num_points = cfg["num_points"]
             if num_points > embed.shape[0]:
                 num_points = embed.shape[0]
-        except:
+        except Exception:
             print("Compute embedding for file %s" % file)
             reducer = umap.UMAP(
                 n_components=2,
@@ -155,10 +154,10 @@ def gif(
             umap_label = np.load(
                 os.path.join(path_to_file, "community", "community_label_" + file + ".npy")
             )
-        elif label == None:
+        elif label is None:
             umap_label = None
 
-        if start == None:
+        if start is None:
             start = np.random.choice(embed[:num_points].shape[0] - length)
         else:
             start = start

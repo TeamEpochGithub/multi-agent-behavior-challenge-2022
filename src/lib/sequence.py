@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 
 class Sequence:
@@ -27,11 +26,10 @@ class Sequence:
 
     def convert_to_vame(self, single_mouse_embedding):
         # Determines if the mice are input into the model one by one
-        single_mouse_embedding = True
         num_frames = 1800
         num_mice = 3
         # Write data header
-        data_arr = [np.repeat(['x', 'y', 'likelihood'], 12)]
+        data_arr = [np.repeat(["x", "y", "likelihood"], 12)]
         for mouse in range(num_mice):
             for f_num in range(num_frames):
                 mouse_kpts = self.get_mouse(0, f_num)
@@ -40,7 +38,7 @@ class Sequence:
                 data_arr.append(row)
         data_np_arr = np.array(data_arr)
         # df = pd.DataFrame(data_np_arr, columns=[''])
-        np.savetxt("file.csv", data_np_arr, delimiter=',')
+        np.savetxt("file.csv", data_np_arr, delimiter=",")
         return True
 
     @staticmethod

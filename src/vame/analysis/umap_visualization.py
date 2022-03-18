@@ -20,7 +20,6 @@ from vame.util.auxiliary import read_config
 
 
 def umap_vis(file, embed, num_points):
-    fig = plt.figure(1)
     plt.scatter(embed[:num_points, 0], embed[:num_points, 1], s=2, alpha=0.5)
     plt.gca().set_aspect("equal", "datalim")
     plt.grid(False)
@@ -28,7 +27,6 @@ def umap_vis(file, embed, num_points):
 
 
 def umap_label_vis(file, embed, label, n_cluster, num_points):
-    fig = plt.figure(1)
     plt.scatter(
         embed[:num_points, 0],
         embed[:num_points, 1],
@@ -45,7 +43,6 @@ def umap_label_vis(file, embed, label, n_cluster, num_points):
 
 def umap_vis_comm(file, embed, community_label, num_points):
     num = np.unique(community_label).shape[0]
-    fig = plt.figure(1)
     plt.scatter(
         embed[:num_points, 0],
         embed[:num_points, 1],
@@ -102,7 +99,7 @@ def visualization(config, label=None):
             num_points = cfg["num_points"]
             if num_points > embed.shape[0]:
                 num_points = embed.shape[0]
-        except:
+        except Exception:
             if not os.path.exists(os.path.join(path_to_file, "community")):
                 os.mkdir(os.path.join(path_to_file, "community"))
             print("Compute embedding for file %s" % file)
@@ -128,7 +125,7 @@ def visualization(config, label=None):
             )
 
         print("Visualizing %d data points.. " % num_points)
-        if label == None:
+        if label is None:
             plot = umap_vis(file, embed, num_points)
             plot.show()
 

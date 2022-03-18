@@ -90,7 +90,7 @@ def create_community_bag(files, labels, transition_matrices, cut_tree, n_cluster
         T = graph_to_tree(usage, transition_matrices[i], n_cluster, merge_sel=1)
         trees.append(T)
 
-        if cut_tree != None:
+        if cut_tree is not None:
             community_bag = traverse_tree_cutline(T, cutline=cut_tree)
             communities_all.append(community_bag)
             draw_tree(T)
@@ -110,7 +110,8 @@ def create_community_bag(files, labels, transition_matrices, cut_tree, n_cluster
                             motif_idx = int(input("Which motif number? "))
                             list_idx = int(
                                 input(
-                                    "At which position in the list? (pythonic indexing starts at 0) "
+                                    "At which position in the list? "
+                                    "(pythonic indexing starts at 0) "
                                 )
                             )
                             community_bag[list_idx].append(motif_idx)
@@ -180,7 +181,6 @@ def umap_vis(cfg, file, embed, community_labels_all):
 
     num = np.unique(community_labels_all)
 
-    fig = plt.figure(1)
     plt.scatter(
         embed[:, 0], embed[:, 1], c=community_labels_all[:num_points], cmap="Spectral", s=2, alpha=1
     )
@@ -247,10 +247,11 @@ def community(config, show_umap=False, cut_tree=None):
         ) as fp:  # Pickling
             pickle.dump(communities_all[idx], fp)
 
-        if show_umap == True:
+        if show_umap is True:
             embed = umap_embedding(cfg, file, model_name, n_cluster)
             umap_vis(cfg, files, embed, community_labels_all[idx])
 
 
-# with open(os.path.join(path_to_file,"community","","hierarchy"+file+".txt"), "rb") as fp:   # Unpickling
+# with open(os.path.join(path_to_file,"community","","hierarchy"+file+".txt"), "rb") as fp:   #
+# Unpickling
 #     b = pickle.load(fp)

@@ -53,7 +53,8 @@ def csv_to_numpy(config, datapath):
         body_position = np.concatenate(positions, axis=1)
         con_arr = np.array(confidence)
 
-        # find low confidence and set them to NaN (vame.create_trainset(config) will interpolate these NaNs)
+        # find low confidence and set them to NaN
+        # (vame.create_trainset(config) will interpolate these NaNs)
         body_position_nan = []
         idx = -1
         for i in range(bodyparts * 2):

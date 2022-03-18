@@ -141,7 +141,7 @@ def train(
                 .type("torch.FloatTensor")
                 .to()
             )
-        if noise == True:
+        if noise is True:
             data_gaussian = gaussian(data, True, seq_len_half)
         else:
             data_gaussian = data
@@ -184,7 +184,8 @@ def train(
 
     if future_decoder:
         print(
-            "Train loss: {:.3f}, MSE-Loss: {:.3f}, MSE-Future-Loss {:.3f}, KL-Loss: {:.3f}, Kmeans-Loss: {:.3f}, weight: {:.2f}".format(
+            "Train loss: {:.3f}, MSE-Loss: {:.3f}, MSE-Future-Loss {:.3f}, KL-Loss: {:.3f}, "
+            "Kmeans-Loss: {:.3f}, weight: {:.2f}".format(
                 train_loss / idx,
                 mse_loss / idx,
                 fut_loss / idx,
@@ -195,7 +196,8 @@ def train(
         )
     else:
         print(
-            "Train loss: {:.3f}, MSE-Loss: {:.3f}, KL-Loss: {:.3f}, Kmeans-Loss: {:.3f}, weight: {:.2f}".format(
+            "Train loss: {:.3f}, MSE-Loss: {:.3f}, KL-Loss: {:.3f}, Kmeans-Loss: {:.3f}, "
+            "weight: {:.2f}".format(
                 train_loss / idx,
                 mse_loss / idx,
                 BETA * kl_weight * kullback_loss / idx,
@@ -316,7 +318,7 @@ def train_model(config):
     SNAPSHOT = cfg["model_snapshot"]
     LEARNING_RATE = cfg["learning_rate"]
     NUM_FEATURES = cfg["num_features"]
-    if legacy == False:
+    if legacy is False:
         NUM_FEATURES = NUM_FEATURES - 2
     TEMPORAL_WINDOW = cfg["time_window"] * 2
     FUTURE_DECODER = cfg["prediction_decoder"]
@@ -362,7 +364,7 @@ def train_model(config):
 
     torch.manual_seed(SEED)
 
-    if legacy == False:
+    if legacy is False:
         RNN = RNN_VAE
     else:
         RNN = RNN_VAE_LEGACY

@@ -10,8 +10,6 @@ Licensed under GNU General Public License v3.0
 """
 import sys
 
-sys.dont_write_bytecode = True
-
 from vame.analysis import (
     community,
     community_videos,
@@ -27,3 +25,5 @@ from vame.util import auxiliary
 from vame.util.align_egocentrical import egocentric_alignment
 from vame.util.auxiliary import update_config
 from vame.util.csv_to_npy import csv_to_numpy
+
+sys.dont_write_bytecode = True

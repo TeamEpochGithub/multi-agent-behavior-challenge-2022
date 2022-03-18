@@ -35,7 +35,7 @@ def init_new_project(project, videos, working_directory=None, videotype=".mp4"):
     d = str(month[0:3] + str(day))
     date = dt.today().strftime("%Y-%m-%d")
 
-    if working_directory == None:
+    if working_directory is None:
         working_directory = "."
 
     wd = Path(working_directory).resolve()
@@ -174,7 +174,8 @@ def init_new_project(project, videos, working_directory=None, videotype=".mp4"):
         "The first step is to move your pose .csv file (e.g. DeepLabCut .csv) into the "
         "//YOUR//VAME//PROJECT//videos//pose_estimation folder. From here you can call "
         "either the function vame.egocentric_alignment() or if your data is by design egocentric "
-        "call vame.csv_to_numpy(). This will prepare the data in .csv into the right format to start "
+        "call vame.csv_to_numpy(). This will prepare the data in .csv into the right format to "
+        "start "
         "working with VAME."
     )
 

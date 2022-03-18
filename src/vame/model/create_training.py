@@ -49,7 +49,7 @@ def traindata(cfg, files, testfraction, num_features, savgol_filter):
         X_std = np.std(data, axis=None)
         X_z = (data.T - X_mean) / X_std
 
-        if cfg["robust"] == True:
+        if cfg["robust"] is True:
             iqr_val = iqr(X_z)
             print("IQR value: %.2f, IQR cutoff: %.2f" % (iqr_val, cfg["iqr_factor"] * iqr_val))
             for i in range(X_z.shape[0]):
@@ -188,10 +188,10 @@ def create_trainset(config):
             files.append(file)
 
     print("Creating training dataset...")
-    if cfg["robust"] == True:
+    if cfg["robust"] is True:
         print("Using robust setting to eliminate outliers! IQR factor: %d" % cfg["iqr_factor"])
 
-    if legacy == False:
+    if legacy is False:
         traindata(cfg, files, cfg["test_fraction"], cfg["num_features"], cfg["savgol_filter"])
     else:
         traindata_legacy(
@@ -199,6 +199,7 @@ def create_trainset(config):
         )
 
     print(
-        "A training and test set has been created. Now everything is ready to train a variational autoencoder "
+        "A training and test set has been created. Now everything is ready to train a "
+        "variational autoencoder "
         "via vame.train_model() ..."
     )

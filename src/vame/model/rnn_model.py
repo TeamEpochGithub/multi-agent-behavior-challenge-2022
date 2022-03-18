@@ -64,16 +64,17 @@ class Lambda(nn.Module):
         self.hidden_to_mean = nn.Linear(self.hid_dim, self.latent_length)
         self.hidden_to_logvar = nn.Linear(self.hid_dim, self.latent_length)
 
-        if self.softplus == True:
+        if self.softplus is True:
             print(
-                "Using a softplus activation to ensures that the variance is parameterized as non-negative and activated by a smooth function"
+                "Using a softplus activation to ensures that the variance is parameterized as "
+                "non-negative and activated by a smooth function"
             )
             self.softplus_fn = nn.Softplus()
 
     def forward(self, hidden):
 
         self.mean = self.hidden_to_mean(hidden)
-        if self.softplus == True:
+        if self.softplus is True:
             self.logvar = self.softplus_fn(self.hidden_to_logvar(hidden))
         else:
             self.logvar = self.hidden_to_logvar(hidden)
@@ -292,7 +293,8 @@ class Lambda_LEGACY(nn.Module):
         self.latent_mean = self.hidden_to_mean(cell_output)
 
         # based on Pereira et al 2019:
-        # "The SoftPlus function ensures that the variance is parameterized as non-negative and activated
+        # "The SoftPlus function ensures that the variance is parameterized as non-negative and
+        # activated
         # by a smooth function
         self.latent_logvar = self.softplus(self.hidden_to_logvar(cell_output))
 

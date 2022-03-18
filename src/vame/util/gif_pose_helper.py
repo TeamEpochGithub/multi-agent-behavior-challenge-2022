@@ -114,7 +114,6 @@ def background(path_to_file, filename, file_format=".mp4", num_frames=1000):
 
 
 def get_rotation_matrix(adjacent, opposite, crop_size=(300, 300)):
-
     tan_alpha = np.abs(opposite) / np.abs(adjacent)
     alpha = np.arctan(tan_alpha)
     alpha = np.rad2deg(alpha)
@@ -140,7 +139,6 @@ def nan_helper(y):
 
 # Interpolates all nan values of given array
 def interpol(arr):
-
     y = np.transpose(arr)
 
     nans, x = nan_helper(y[0])
@@ -189,11 +187,11 @@ def get_animal_frames(
     pose_flip_ref = pose_ref_index
 
     # compute background
-    if subtract_background == True:
+    if subtract_background is True:
         try:
             print("Loading background image ...")
             bg = np.load(os.path.join(path_to_file, "videos", filename + "-background.npy"))
-        except:
+        except Exception:
             print("Can't find background image... Calculate background image...")
             bg = background(path_to_file, filename, file_format)
 
@@ -221,10 +219,10 @@ def get_animal_frames(
             capture.set(1, idx + start + lag)
             ret, frame = capture.read()
             frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            if subtract_background == True:
+            if subtract_background is True:
                 frame = frame - bg
                 frame[frame <= 0] = 0
-        except:
+        except Exception:
             print("Couldn't find a frame in capture.read(). #Frame: %d" % idx + start + lag)
             continue
 
