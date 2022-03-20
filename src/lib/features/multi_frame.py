@@ -5,11 +5,12 @@ import numpy as np
 from lib.sequence import Sequence
 
 
-def calc_velocities(seq: Sequence):
+def calc_velocities(seq: Sequence, verbose=False):
     """
     calculates velocity vectors (displacement of neck per frame) for all 3 mice
     velocity for the 0th frame is assumed the same as for frame 1 (probably better than just zeros)
     :param seq: 1 sequence
+    :param verbose:
     :return: np array of shape (1800, 3, 2)
     """
     velocities = np.empty((1800, 3, 2))
@@ -19,7 +20,7 @@ def calc_velocities(seq: Sequence):
                 Sequence.name_mouse(seq.get_mouse(m, i))["neck"]
                 - Sequence.name_mouse(seq.get_mouse(m, i - 1))["neck"]
             )
-        if np.any(np.abs(velocities[i]) > 25):
+        if np.any(np.abs(velocities[i]) > 25) and verbose:
             print(f"outlier at {i}: \n{velocities[i]}")
             print(Sequence.name_mouse(seq.get_mouse(0, i))["neck"])
             print(Sequence.name_mouse(seq.get_mouse(1, i))["neck"])
