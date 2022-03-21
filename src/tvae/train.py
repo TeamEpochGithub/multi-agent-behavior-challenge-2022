@@ -25,8 +25,8 @@ def train(model, data_loader, train_config, device):
 		print('-=-=-= EPOCH {} OF {} =-=-=-'.format(epoch, train_config['num_epochs']))
 		if epoch % train_config['num_epochs_til_val'] == 0:
 
-			model = model.eval()
-			data_loader.dataset.eval()
+			model = model.eval().to(device)
+			data_loader.dataset.eval().to(device)
 
 			torch.save(
 				model.state_dict(),
