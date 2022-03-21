@@ -39,9 +39,54 @@ def calc_energy(velocities):
     return np.mean(np.apply_along_axis(lambda v: np.sqrt(v[0] ** 2 + v[1] ** 2), 2, velocities), 0)
 
 
+def vectorized_mice_distance_angle(seq: Sequence) -> np.ndarray(dtype=float, shape=(1800, 3, 3, 2)):
+    """
+    Hopefully faster implementation of mice_distance_angle
+    :param seq: sequence
+    :return:
+    """
+    frames = seq.frames
+    # get necessary keypoints without dictionaries
+    neck1 = frames[:, 6:8]
+    neck2 = frames[:, 24 + 6 : 24 + 8]
+    neck3 = frames[:, 48 + 6 : 48 + 8]
+    necks = [neck1, neck2, neck3]
+    nose1 = frames[:, 0:2]
+    nose2 = frames[:, 24 + 0 : 24 + 2]
+    nose3 = frames[:, 48 + 0 : 48 + 2]
+    noses = [nose1, nose2, nose3]
+    if frames.shape[0] != 1800:
+        raise ValueError
+    result = np.zeros((1800, 3, 3, 2), dtype=float)
+    for m1 in range(3):
+        neck = necks[m1]
+        nose = noses[m1]
+        direction = nose - neck
+        direction_norm = np.linalg.norm(direction, axis=1)
+        for m2 in range(3):
+            if m1 == m2:
+                continue
+            second_neck = necks[m2]
+            intermouse = second_neck - neck
+            result[:, m1, m2, 0] = np.linalg.norm(intermouse, axis=1)
+            intermouse_norm = np.linalg.norm(intermouse, axis=1)
+            # ake diagonal values of matrix multiplication to get correct dot products
+            dot_product = np.dot(direction, intermouse.T).diagonal()
+            # this may give division by zero warnings
+            dot_norm = dot_product / direction_norm / intermouse_norm
+            # fix NaNs to set zeros
+            dot_norm = np.nan_to_num(dot_norm)
+            # in case floating point computation takes over 1
+            dot_norm = np.clip(dot_norm, -1, 1)
+            angle = np.arccos(dot_norm)
+            result[:, m1, m2, 1] = angle
+    return result
+
+
 def apply_single_frame(seq: Sequence, func: Callable) -> np.ndarray:
     """
     Runs a single-frame feature on all frames of the given sequence
+    May be really slow
     :param seq:
     :param func:
     :return: np array of size (amount_of_frames x return_shape_of_func)

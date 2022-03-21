@@ -3,7 +3,9 @@ import numpy as np
 from lib.sequence import Sequence
 
 
-def mice_distance_angle(frame: np.ndarray) -> np.ndarray(dtype=float, shape=(3, 3, 2)):
+def mice_distance_angle(
+    frame: np.ndarray, verbose=False
+) -> np.ndarray(dtype=float, shape=(3, 3, 2)):
     """
     Produces distances between necks of mice and angle of neck with respect to neck -> nose vector
     For index consistency, there are 3 values each mouse
@@ -11,6 +13,7 @@ def mice_distance_angle(frame: np.ndarray) -> np.ndarray(dtype=float, shape=(3, 
     Angle (in radians) does not differentiate between left and right.
         Angle is between 0 and pi
     :param frame: original keypoints - 72 numbers
+    :param verbose:
     :return: float array,
      [i][j][0] is distance between mouse i and j,
      [i][j][1] is angle between mouse i and j
@@ -39,7 +42,7 @@ def mice_distance_angle(frame: np.ndarray) -> np.ndarray(dtype=float, shape=(3, 
                 dot_product = np.clip(dot_product, -1, 1)
                 angle = np.arccos(dot_product)
                 result[m1][m2][1] = angle
-            else:
+            elif verbose:
                 print("(neck -> nose) or (neck -> second neck) vector has length 0")
     return result
 
