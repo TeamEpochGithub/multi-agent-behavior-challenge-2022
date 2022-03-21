@@ -3,7 +3,7 @@ import numpy as np
 from lib.sequence import Sequence
 
 
-def fix_zero_jump(seq: Sequence) -> None:
+def fix_zero_jump(seq: Sequence, verbose=False) -> None:
     """
     the given keypoints often suddenly jump to 0 for a few frames.
     this messes with velocities, for example
@@ -12,6 +12,7 @@ def fix_zero_jump(seq: Sequence) -> None:
         new_point = prev_point + (avg displacement of valid points)
     works inplace
     :param seq:
+    :param verbose:
     :return:
     """
     # first frame should be valid, so if it's not, take the earliest valid mouse
@@ -21,7 +22,8 @@ def fix_zero_jump(seq: Sequence) -> None:
                 seq.set_mouse(m, 0, seq.get_mouse(m, f))
                 break
             if f == seq.frames.shape[0] - 1:
-                print("encountered a zero in all mouse positions, keeping original")
+                if verbose:
+                    print("encountered a zero in all mouse positions, keeping original")
                 return
 
     for f in range(1, seq.frames.shape[0]):
