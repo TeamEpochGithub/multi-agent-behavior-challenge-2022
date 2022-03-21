@@ -6,7 +6,7 @@ from torch.utils.data import random_split
 
 from lib.models.core import TVAE
 from util.logging import LogEntry 
-from datasets import load_dataset
+from datatvae import load_dataset
 
 import os
 import numpy as np

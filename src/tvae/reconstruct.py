@@ -4,8 +4,8 @@ from torch.utils.data import random_split
 
 from lib.models.core import TVAE
 from util.logging import LogEntry 
-from datasets import load_dataset
-from datasets.mouse_v1.preprocess import unnormalize
+from datatvae import load_dataset
+from datatvae.mouse_v1.preprocess import unnormalize
 
 import os
 import random
