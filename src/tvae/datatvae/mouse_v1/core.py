@@ -3,10 +3,10 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 import torch
 
-from datasets import TrajectoryDataset
+from tvae.datatvae import TrajectoryDataset
 from tqdm import tqdm
 
-from util.logging import LogEntry
+from tvae.util.logging import LogEntry
 from .preprocess import *
 import pickle
 

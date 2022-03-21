@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from util.logging import LogEntry
-from lib.distributions import Normal
+from tvae.util.logging import LogEntry
+from tvae.lib.distributions import Normal
 
 
 class TVAE(nn.Module):

@@ -37,7 +37,7 @@ def unnormalize(data):
 
 def rotate(data, center_index):
     # data shape is num_seq x 3 x 10 x 2
-    print(data.shape)
+
     data = data.reshape(data.shape[0], 3, 12 ,2)
     mice = [data[:,i,:10,:] for i in range(3)]
     data = np.concatenate(mice, axis=0)
@@ -46,7 +46,6 @@ def rotate(data, center_index):
     gc.collect()
 
     mouse_center = data[:, center_index, :]
-    print(mouse_center.shape, mouse_center[:, np.newaxis, :].shape)
     centered_data = data - mouse_center[:, np.newaxis, :]
 
 	# Rotate such that keypoints 3 and 6 are parallel with the y axis
