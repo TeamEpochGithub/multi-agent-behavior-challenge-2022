@@ -24,21 +24,22 @@ class Sequence:
             raise ValueError(f"Incorrect mouse shape, expected (24, ), got {mouse.shape}")
         self.frames[frame_idx][mouse_idx * 24 : (mouse_idx + 1) * 24] = mouse
 
-    def convert_to_vame_frame(self, single_mouse_embedding: bool) -> np.ndarray:
+    def convert_to_vame_frame(self, single_mouse_embedding=True) -> np.ndarray:
         """
         Converts the sequence instance into a vame-compatible 2d numpy array
         :param single_mouse_embedding: true to isolate individual mice,
         false to convert them all at the same time.
         :return: the numpy array
         """
-        # If true, returns (5400, 36) array, otherwise returns (1800, 108)
-        if not single_mouse_embedding:
-            # For now not implemented
-            return np.zeros(0)
+        # If true, returns (5400, 36) array, otherwise returns a (3, 1800, 36) array,
+        # one for each mouse
+        if single_mouse_embedding:
+            data_arr = np.zeros((5400, 36))
+        else:
+            data_arr = np.zeros((3, 1800, 36))
         num_frames = 1800
         num_mice = 3
         # 3 mice * 1800 frames = 5400, 3 cols * 12 keypoints = 36
-        data_arr = np.zeros((5400, 36))
         for mouse_idx in range(num_mice):
             for f_num in range(num_frames):
                 # Indexing data_arr
@@ -47,7 +48,10 @@ class Sequence:
                 mouse_kpts = self.get_mouse(mouse_idx, f_num)
                 likelihood_vals = list(range(2, 24 + 1, 2))
                 row = np.insert(mouse_kpts, likelihood_vals, 1.0)
-                data_arr[data_idx, :] = row
+                if single_mouse_embedding:
+                    data_arr[data_idx, :] = row
+                else:
+                    data_arr[mouse_idx, f_num, :] = row
         return data_arr
 
     @staticmethod
