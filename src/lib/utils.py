@@ -275,7 +275,7 @@ def convert_seqs_to_vame(
         vame_data = np.zeros((n_s, 3, 1800, 36))
 
     for idx, seq in enumerate(sequences):
-        vame_data[idx] = seq.convert_to_vame_frame(seq, single_mouse_embedding)
+        vame_data[idx] = seq.convert_to_vame_frame(single_mouse_embedding)
 
     top = [f"vame-{n_s}sequences"]
     mouse_kpt_names = [
