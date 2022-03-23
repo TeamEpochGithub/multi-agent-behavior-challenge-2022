@@ -275,7 +275,7 @@ def convert_seqs_to_vame(
     else:
         vame_data = np.zeros((n_s, 3, 1800, 36))
 
-    for idx, seq in tqdm(enumerate(sequences), desc="Sequences: "):
+    for idx, seq in tqdm(enumerate(sequences), total=n_s, desc="Sequences"):
         vame_data[idx] = seq.convert_to_vame_frame(single_mouse_embedding)
 
     top = [f"vame-{n_s}sequences"]
