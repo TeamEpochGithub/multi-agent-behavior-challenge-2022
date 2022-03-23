@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import animation, rc
+from tqdm import tqdm
 
 from lib.sequence import Sequence
 
@@ -274,7 +275,7 @@ def convert_seqs_to_vame(
     else:
         vame_data = np.zeros((n_s, 3, 1800, 36))
 
-    for idx, seq in enumerate(sequences):
+    for idx, seq in tqdm(enumerate(sequences), desc="Sequences: "):
         vame_data[idx] = seq.convert_to_vame_frame(single_mouse_embedding)
 
     top = [f"vame-{n_s}sequences"]
