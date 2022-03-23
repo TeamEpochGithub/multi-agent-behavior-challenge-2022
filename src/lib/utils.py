@@ -272,7 +272,7 @@ def convert_seqs_to_vame(
     if single_mouse_embedding:
         vame_data = np.zeros((n_s, 5400, 36))
     else:
-        vame_data = np.zeros((n_s, 3, 5400, 36))
+        vame_data = np.zeros((n_s, 3, 1800, 36))
 
     for idx, seq in enumerate(sequences):
         vame_data[idx] = seq.convert_to_vame_frame(seq, single_mouse_embedding)
