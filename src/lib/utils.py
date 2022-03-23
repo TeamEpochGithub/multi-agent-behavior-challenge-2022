@@ -303,9 +303,9 @@ def convert_seqs_to_vame(
         v_d_m_1 = vame_data[:, 0, :, :]
         v_d_m_2 = vame_data[:, 1, :, :]
         v_d_m_3 = vame_data[:, 2, :, :]
-        v_d_m_1 = np.reshape(v_d_m_1, (n_s * 5400, 36))
-        v_d_m_2 = np.reshape(v_d_m_2, (n_s * 5400, 36))
-        v_d_m_3 = np.reshape(v_d_m_3, (n_s * 5400, 36))
+        v_d_m_1 = np.reshape(v_d_m_1, (n_s * 1800, 36))
+        v_d_m_2 = np.reshape(v_d_m_2, (n_s * 1800, 36))
+        v_d_m_3 = np.reshape(v_d_m_3, (n_s * 1800, 36))
         df_m1 = pd.DataFrame(data=v_d_m_1, columns=v_d_cols)
         df_m2 = pd.DataFrame(data=v_d_m_2, columns=v_d_cols)
         df_m3 = pd.DataFrame(data=v_d_m_3, columns=v_d_cols)
