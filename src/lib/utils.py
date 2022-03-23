@@ -1,5 +1,6 @@
 import copy
 import itertools
+from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -258,18 +259,23 @@ def make_sequences(sub_clips, train_data):
     return train_sequences, submission_sequences
 
 
-def convert_seqs_to_vame(sequences: [Sequence]) -> pd.DataFrame:
+def convert_seqs_to_vame(
+    sequences: [Sequence], single_mouse_embedding=True
+) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]]:
     """
     Convert list of Sequences into a complete VAME DataFrame
+    :param single_mouse_embedding:
     :param sequences: list of sequences
-    :return: VAME compatible dataframe
+    :return: VAME compatible dataframe OR tuple of three dataframes, one for each mouse
     """
     n_s = len(sequences)
-    vame_data = np.zeros((n_s, 5400, 36))
-    for idx, seq in enumerate(sequences):
-        vame_data[idx, :, :] = seq.convert_to_vame_frame(seq)
+    if single_mouse_embedding:
+        vame_data = np.zeros((n_s, 5400, 36))
+    else:
+        vame_data = np.zeros((n_s, 3, 5400, 36))
 
-    vame_data = np.reshape(vame_data, (n_s * 5400, 36))
+    for idx, seq in enumerate(sequences):
+        vame_data[idx] = seq.convert_to_vame_frame(seq, single_mouse_embedding)
 
     top = [f"vame-{n_s}sequences"]
     mouse_kpt_names = [
@@ -287,6 +293,19 @@ def convert_seqs_to_vame(sequences: [Sequence]) -> pd.DataFrame:
         "tail tip",
     ]
     x_y_l = ["x", "y", "likelihood"]
-
     v_d_cols = pd.MultiIndex.from_tuples(itertools.product(top, mouse_kpt_names, x_y_l))
-    return pd.DataFrame(data=vame_data, columns=v_d_cols)
+
+    if single_mouse_embedding:
+        vame_data = np.reshape(vame_data, (n_s * 5400, 36))
+        return pd.DataFrame(data=vame_data, columns=v_d_cols)
+    else:
+        v_d_m_1 = vame_data[:, 0, :, :]
+        v_d_m_2 = vame_data[:, 1, :, :]
+        v_d_m_3 = vame_data[:, 2, :, :]
+        v_d_m_1 = np.reshape(v_d_m_1, (n_s * 5400, 36))
+        v_d_m_2 = np.reshape(v_d_m_2, (n_s * 5400, 36))
+        v_d_m_3 = np.reshape(v_d_m_3, (n_s * 5400, 36))
+        df_m1 = pd.DataFrame(data=v_d_m_1, columns=v_d_cols)
+        df_m2 = pd.DataFrame(data=v_d_m_2, columns=v_d_cols)
+        df_m3 = pd.DataFrame(data=v_d_m_3, columns=v_d_cols)
+        return df_m1, df_m2, df_m3
