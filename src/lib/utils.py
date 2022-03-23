@@ -271,9 +271,9 @@ def convert_seqs_to_vame(
     """
     n_s = len(sequences)
     if single_mouse_embedding:
-        vame_data = np.zeros((n_s, 5400, 36))
+        vame_data = np.zeros((n_s, 5400, 36), dtype=np.float16)
     else:
-        vame_data = np.zeros((n_s, 3, 1800, 36))
+        vame_data = np.zeros((n_s, 3, 1800, 36), dtype=np.float16)
 
     for idx, seq in tqdm(enumerate(sequences), total=n_s, desc="Sequences"):
         vame_data[idx] = seq.convert_to_vame_frame(single_mouse_embedding)
@@ -298,7 +298,7 @@ def convert_seqs_to_vame(
 
     if single_mouse_embedding:
         vame_data = np.reshape(vame_data, (n_s * 5400, 36))
-        return pd.DataFrame(data=vame_data, columns=v_d_cols)
+        return pd.DataFrame(data=vame_data, columns=v_d_cols, dtype=np.float16)
     else:
         v_d_m_1 = vame_data[:, 0, :, :]
         v_d_m_2 = vame_data[:, 1, :, :]
@@ -306,7 +306,7 @@ def convert_seqs_to_vame(
         v_d_m_1 = np.reshape(v_d_m_1, (n_s * 1800, 36))
         v_d_m_2 = np.reshape(v_d_m_2, (n_s * 1800, 36))
         v_d_m_3 = np.reshape(v_d_m_3, (n_s * 1800, 36))
-        df_m1 = pd.DataFrame(data=v_d_m_1, columns=v_d_cols)
-        df_m2 = pd.DataFrame(data=v_d_m_2, columns=v_d_cols)
-        df_m3 = pd.DataFrame(data=v_d_m_3, columns=v_d_cols)
+        df_m1 = pd.DataFrame(data=v_d_m_1, columns=v_d_cols, dtype=np.float16)
+        df_m2 = pd.DataFrame(data=v_d_m_2, columns=v_d_cols, dtype=np.float16)
+        df_m3 = pd.DataFrame(data=v_d_m_3, columns=v_d_cols, dtype=np.float16)
         return df_m1, df_m2, df_m3
