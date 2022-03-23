@@ -2,10 +2,10 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 
-from lib.models.core import TVAE
-from util.logging import LogEntry 
-from datatvae import load_dataset
-from datatvae.mouse_v1.preprocess import unnormalize
+from tvae.lib.models.core import TVAE
+from tvae.util.logging import LogEntry 
+from tvae.datatvae import load_dataset
+from tvae.datatvae.mouse_v1.preprocess import unnormalize
 
 import os
 import random
