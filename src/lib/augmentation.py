@@ -10,7 +10,7 @@ from scipy.ndimage import gaussian_filter1d
 
 def reflect_points(keypoints, a, b, c):
     """
-    Reflects the keypoints with respect to the line.    
+    Reflects the keypoints with respect to the line.
     Normalize the equation by dividing it by sqrt(a^2 + b^2)
     a * x + b * y + c = 0
 
@@ -37,5 +37,4 @@ def reflect_points(keypoints, a, b, c):
     new_keypoints[:, :, :, 1] = keypoints[:, :, :, 1] - 2 * b * d
 
     return new_keypoints
-
 
