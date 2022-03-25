@@ -76,3 +76,6 @@ class Sequence:
             "tail tip": (mouse[22:24]),
         }
         return mouse
+
+    def __len__(self):
+        return self.frames.shape[0]
