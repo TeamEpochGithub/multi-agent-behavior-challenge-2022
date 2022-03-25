@@ -37,4 +37,3 @@ def reflect_points(keypoints, a, b, c):
     new_keypoints[:, :, :, 1] = keypoints[:, :, :, 1] - 2 * b * d
 
     return new_keypoints
-
