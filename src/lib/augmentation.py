@@ -1,4 +1,4 @@
-import torch 
+import torch
 import numpy as np
 import pickle
 from scipy.ndimage import gaussian_filter1d
@@ -7,9 +7,11 @@ from scipy.ndimage import gaussian_filter1d
 # https://over.wiki/ask/how-to-make-a-move-relative-to-a-straight-line-ax-by-c-0-affine-transformations/
 # https://arxiv.org/pdf/2011.13917.pdf
 
+
 def reflect_points(keypoints, a, b, c):
     """
-    Reflects the keypoints with respect to the line. Normalize the equation by dividing it by sqrt(a^2 + b^2)
+    Reflects the keypoints with respect to the line.    
+    Normalize the equation by dividing it by sqrt(a^2 + b^2)
     a * x + b * y + c = 0
 
     Horizontal reflection: a = 0, b = 1, c = -FRAME_HEIGHT // 2
@@ -21,7 +23,7 @@ def reflect_points(keypoints, a, b, c):
     :param c: look at the equation in the description
     :return: the new set of keypoints
     """
-    new_keypoints =  np.zeros(keypoints.shape)
+    new_keypoints = np.zeros(keypoints.shape)
 
     # normalize the equation
     m = np.sqrt(a * a + b * b)
@@ -35,8 +37,5 @@ def reflect_points(keypoints, a, b, c):
     new_keypoints[:, :, :, 1] = keypoints[:, :, :, 1] - 2 * b * d
 
     return new_keypoints
-
-
-
 
 
