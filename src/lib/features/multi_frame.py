@@ -69,9 +69,8 @@ def vectorized_mice_distance_angle(seq: Sequence) -> np.ndarray(dtype=float, sha
             second_neck = necks[m2]
             intermouse = second_neck - neck
             intermouse_norm = np.linalg.norm(intermouse, axis=1)
-            
             result[:, m1, m2, 0] = intermouse_norm
-            
+
             # take diagonal values of matrix multiplication to get correct dot products
             dot_product = np.dot(direction, intermouse.T).diagonal()
             # this may give division by zero warnings
