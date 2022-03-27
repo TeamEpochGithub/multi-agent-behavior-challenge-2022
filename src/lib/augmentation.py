@@ -8,8 +8,15 @@ from scipy.ndimage import gaussian_filter1d
 # https://arxiv.org/pdf/2011.13917.pdf
 
 
-def reflect_points(keypoints, a, b, c):
+def reflect_points(keypoints, a, b, c = 850):
     """
+
+    In the original dataset, CalMS21, the frame height and width are 1024 and 570 respectively. 
+    However, for this competiton the images are resized to 850x850.
+
+    DEFAULT FRAME HEIGHT: 850
+    DEFAULT FRAME WIDTH: 850
+
     Reflects the keypoints with respect to the line.
     Normalize the equation by dividing it by sqrt(a^2 + b^2)
     a * x + b * y + c = 0
