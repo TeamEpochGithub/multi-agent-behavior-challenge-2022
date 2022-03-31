@@ -1,4 +1,10 @@
+from typing import List
+
 import numpy as np
+import torch
+from tqdm import tqdm
+
+from lib.sequence import Sequence
 
 
 def dataset_from_frames(
@@ -33,3 +39,46 @@ def dataset_from_frames(
         y[i_datapoint] = frames[end + pad_to_ans]
         i_datapoint += 1
     return dataset, y
+
+
+def _gen_tensor_dataset(sequences, dataset_config):
+    x = []
+    y = []
+    for i in tqdm(range(len(sequences))):
+        curr_x, curr_y = dataset_from_frames(
+            sequences[i].frames,
+            dataset_config["length"],
+            dataset_config["every Nth"],
+            dataset_config["stride"],
+            dataset_config["pad to ans"],
+        )
+        x.append(curr_x)
+        y.append(curr_y)
+    x_shape = (len(x) * x[0].shape[0], dataset_config["length"], -1)
+    y_shape = (len(x) * x[0].shape[0], -1)
+    x = torch.tensor(np.array(x).reshape(x_shape), dtype=torch.float32)
+    y = torch.tensor(np.array(y).reshape(y_shape), dtype=torch.float32)
+    return x, y
+
+
+def full_tensor_train_test(
+    sequences: List[Sequence], dataset_config: dict, test_fraction=0.2, seed=42
+) -> [torch.tensor] * 4:
+    """
+    Creates a dataset from multiple sequences and does a ttsplit, ensuring the frames from one
+    sequence are either only in train or in test
+    :param sequences: list of sequences
+    :param dataset_config: dict with fields: length, every Nth, stride, pad to ans
+    :param test_fraction: part of data for test set
+    :param seed: random seed
+    :return: 4 tensors
+    """
+    np.random.seed(seed)
+    np.random.shuffle(sequences)
+    num_test = round(test_fraction * len(sequences))
+    test = sequences[:num_test]
+    train = sequences[num_test:]
+
+    x_train, y_train = _gen_tensor_dataset(train, dataset_config)
+    x_test, y_test = _gen_tensor_dataset(test, dataset_config)
+    return x_train, x_test, y_train, y_test
