@@ -1,48 +1,53 @@
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
-
-from lib.mice_dataset import MiceDataset
+from torch import nn
+from torch.utils.data import DataLoader, Dataset
 
 
 def train_model(
-    model,
+    model: nn.Module,
+    dataset: Dataset,
     neptune_run,
-    X: torch.tensor,
-    y: torch.tensor,
     params: dict,
-    dataset_config: dict,
-    batch_size=16,
+    dataset_config: dict = None,
+    criterion=None,
+    optimizer=None,
+    finish_neptune=False,
 ):
     """
-    TODO
-    :param model:
-    :param neptune_run:
-    :param X:
-    :param y:
-    :param params:
-    :param dataset_config:
-    :param batch_size:
-    :return:
+    Trains a PyTorch model and logs it to neptune (https://neptune.ai/)
+    :param model: torch model, probably a Perceiver
+    :param neptune_run: instance of a started neptune run
+    :param dataset: torch dataset
+    :param params: dict including values: batch size, epochs
+    :param dataset_config: dict that was used for dataset creation. some values may be added
+    :param criterion: for training, on cuda. Defaults to MSE
+    :param optimizer: for training. Defaults to Adam with lr from params dict
+    :param finish_neptune: whether to stop neptune run
+    :return: None
     """
     # model essentials
-    criterion = torch.nn.MSELoss().cuda()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3, amsgrad=True)
+    if not criterion:
+        criterion = torch.nn.MSELoss().cuda()
+    if not optimizer:
+        optimizer = optim.Adam(model.parameters(), lr=params["learning rate"], amsgrad=True)
 
     # data transformations
-    dataset = MiceDataset(torch.Tensor(X), torch.Tensor(y))
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=params["batch size"], shuffle=True)
 
     model.cuda()
     model.train()
 
     # log to neptune
-    params["batch size"] = batch_size
-    dataset_config["dataset size"] = len(dataset)
     neptune_run["parameters"] = params
-    neptune_run["dataset config"] = dataset_config
+    if dataset_config:
+        # complete Datasets have __len__ implementation, so the warning is wrong
+        # (also read https://github.com/pytorch/pytorch/blob/master/torch/utils/data/sampler.py)
+        # noinspection PyTypeChecker
+        dataset_config["dataset size"] = len(dataset)
+        neptune_run["dataset config"] = dataset_config
 
-    for epoch in range(20):
+    for epoch in range(params["epochs"]):
         running_loss = 0.0
         for batch in dataloader:
             data, answers = batch
@@ -56,11 +61,11 @@ def train_model(
             loss.backward()
             optimizer.step()
 
-            # print statistics
             running_loss += loss.item()
+        # noinspection PyTypeChecker
         avg_loss = running_loss / len(dataset)
         print(f"loss at epoch {epoch}: {avg_loss}")
         neptune_run["train/loss"].log(avg_loss)
 
-    # submit neptune
-    neptune_run.stop()
+    if finish_neptune:
+        neptune_run.stop()
