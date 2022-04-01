@@ -82,7 +82,7 @@ def train_model(
             neptune_run["val/loss"].log(val_loss)
             neptune_run["val/score"].log(val_score)
             print(f"val loss at epoch {epoch + 1}: {val_loss}")
-            if val_score != 0:
+            if validation_metric is not None:
                 if best_score is None:
                     best_score = val_score
                 is_best = val_score > best_score
