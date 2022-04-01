@@ -115,7 +115,7 @@ def validate(model: nn.Module, val_dataloader: DataLoader, criterion, metric=Non
     :param model: model to validate
     :param val_dataloader: validation data
     :param criterion: loss function
-    :param metric: answer assessment functiont
+    :param metric: answer assessment function
     :return: average loss and metric score
     """
     losses = AverageMeter()
