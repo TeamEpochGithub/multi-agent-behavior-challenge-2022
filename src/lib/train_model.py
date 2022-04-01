@@ -24,7 +24,7 @@ def train_model(
     :param model: torch model, probably a Perceiver
     :param neptune_run: instance of a started neptune run
     :param dataset: torch dataset
-    :param params: dict including values: batch size, epochs
+    :param params: dict including values: batch size, epochs, learning rate
     :param validation_set: dataset used to determine model performance. no set is used by default
     :param validation_metric: metric to determine performance (greater is better).
         Default - use loss (smaller is better)
@@ -83,10 +83,14 @@ def train_model(
             neptune_run["val/score"].log(val_score)
             print(f"val loss at epoch {epoch + 1}: {val_loss}")
             if val_score != 0:
+                if best_score is None:
+                    best_score = val_score
                 is_best = val_score > best_score
                 best_score = max(val_score, best_score)
             else:
                 # fallback to loss
+                if best_score is None:
+                    best_score = val_loss
                 is_best = val_loss < best_score
                 best_score = min(val_loss, best_score)
             neptune_run["best score"] = best_score
@@ -111,7 +115,7 @@ def validate(model: nn.Module, val_dataloader: DataLoader, criterion, metric=Non
     :param model: model to validate
     :param val_dataloader: validation data
     :param criterion: loss function
-    :param metric: answer assessment function
+    :param metric: answer assessment functiont
     :return: average loss and metric score
     """
     losses = AverageMeter()
