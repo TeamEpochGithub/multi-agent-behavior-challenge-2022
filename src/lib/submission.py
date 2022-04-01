@@ -3,11 +3,11 @@ from torch import nn
 from tqdm import tqdm
 
 def find_seq(name, sub_sequences):
-	"""
+    """
     Finds the index of the sequence. Useful for features computed outside the function submission_embeddings
     :param name: id of the sequence
     :param sub_sequences: list of sequences
-	"""
+    """
     for i in range(len(sub_sequences)):
         if sub_sequences[i].name == name:
             return i
@@ -84,12 +84,12 @@ def validate_submission(submission, submission_clips):
     Checks that the submission dict has all the specific reqs for a submission.
     """
     if not isinstance(submission, dict):
-      print("Submission should be dict")
-      return False
+        print("Submission should be dict")
+        return False
 
     if 'frame_number_map' not in submission:
-      print("Frame number map missing")
-      return False
+        print("Frame number map missing")
+        return False
 
     if 'embeddings' not in submission:
         print('Embeddings array missing')
@@ -107,7 +107,6 @@ def validate_submission(submission, submission_clips):
         print(f"Embeddings are not float32")
         return False
 
-    
     total_clip_length = 0
     for key in submission_clips['sequences']:
         start, end = submission['frame_number_map'][key]
@@ -116,7 +115,7 @@ def validate_submission(submission, submission_clips):
         if not end-start == clip_length:
             print(f"Frame number map for clip {key} doesn't match clip length")
             return False
-            
+
     if not len(submission['embeddings']) == total_clip_length:
         print(f"Emebddings length doesn't match submission clips total length")
         return False
