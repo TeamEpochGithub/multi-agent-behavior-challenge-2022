@@ -142,3 +142,6 @@ src/input/
 # VAME image and video results
 results/
 videos/
+
+# Mac files 
+.DS_Store
