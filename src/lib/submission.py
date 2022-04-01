@@ -19,7 +19,7 @@ def find_seq(name, sub_sequences):
 
 
 def submission_embeddings(config: dict, sub_clips: dict, model: nn.Module,
-        sub_seq: list, func = None, embd: list = None) -> dict:
+    sub_seq: list, func=None, embd: list = None) -> dict:
     """
     Creates a ready for submission dict with an arbitrary model.
     (works only for the perceiver for now)
@@ -35,7 +35,8 @@ def submission_embeddings(config: dict, sub_clips: dict, model: nn.Module,
 
     embeddings_model_size = config["model_embd_size"]
     features_size = config["feature_size"]
-    num_total_frames = np.sum([seq['keypoints'].shape[0] for _, seq in sub_clips['sequences'].items()])
+    sub_clips_items = sub_clips['sequences'].items()
+    num_total_frames = np.sum([seq['keypoints'].shape[0] for _, seq in sub_clips_items])
     embeddings_size = embeddings_model_size + features_size
     embeddings_array = np.empty((num_total_frames, embeddings_size), dtype=np.float32)
 
@@ -51,20 +52,21 @@ def submission_embeddings(config: dict, sub_clips: dict, model: nn.Module,
         embeddings = np.empty((len(keypoints), embeddings_size), dtype=np.float32)
 
         X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["frame_increment"])])
-        
         # probably works only for the perceiver for now
         embs = model(torch.Tensor(X).cuda().unsqueeze(0),
-                return_embeddings=config["return_embeddings"])[0]
+            return_embeddings=config["return_embeddings"])[0]
 
         for i in range(len(keypoints)):
 
             if i % config["freq_embd_calc"] == 0 and i + seq_len < len(keypoints):
                 # in the initial notebook config["freq_embd_calc"] is 100,
                 # ideally should be 1 but really long submission time
-                X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["frame_inc"])])
+                X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
                 # probably works only for the perceiver for now
                 embs = model(torch.Tensor(X).cuda().unsqueeze(0),
-                        return_embeddings=config["return_embeddings"])[0]
+                    return_embeddings=config["return_embeddings"])[0]
+
+                    
 
         embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
         last = embeddings_model_size
