@@ -89,7 +89,7 @@ def load_model(cfg, model_name, legacy):
     return model
 
 
-def embedd_latent_vectors(cfg, files, model, legacy):
+def embedd_latent_vectors(cfg, files, model, legacy, batch_size=10):
     project_path = cfg["project_path"]
     temp_win = cfg["time_window"]
     num_features = cfg["num_features"]
@@ -99,19 +99,23 @@ def embedd_latent_vectors(cfg, files, model, legacy):
     latent_vector_files = []
 
     for file in files:
-        print("Embedd latent vector for file %s" % file)
+        print("Prepare data for file %s" % file)
         data = np.load(os.path.join(project_path, "data", file, file + "-PE-seq-clean.npy"))
         latent_vector_list = []
-        with torch.no_grad():
-            for i in tqdm.tqdm(range(data.shape[1] - temp_win)):
-                # for i in tqdm.tqdm(range(10000)):
-                data_sample_np = data[:, i : temp_win + i].T
+        for i in tqdm.tqdm(range(data.shape[1] - temp_win), batch_size):
+            # for i in tqdm.tqdm(range(10000)):
+            batch_samples = []
+            for j in range(i, i + batch_size):
+                if j >= data.shape[1] - temp_win:
+                    break
+                data_sample_np = data[:, j : temp_win + j].T
                 data_sample_np = np.reshape(data_sample_np, (1, temp_win, num_features))
-                h_n = model.encoder(
-                    torch.from_numpy(data_sample_np).type("torch.FloatTensor").cuda()
-                )
-                _, mu, _ = model.lmbda(h_n)
-                latent_vector_list.append(mu.cpu().data.numpy())
+                batch_samples.append(data_sample_np)
+            batch_samples = np.reshape(batch_samples, (-1, temp_win, num_features))
+            infer_tensor = torch.from_numpy(batch_samples).type("torch.FloatTensor").cuda()
+            h_n = model.encoder(infer_tensor)
+            _, mu, _ = model.lmbda(h_n)
+            latent_vector_list.append(mu.cpu().data.numpy())
 
         latent_vector = np.concatenate(latent_vector_list, axis=0)
         latent_vector_files.append(latent_vector)
