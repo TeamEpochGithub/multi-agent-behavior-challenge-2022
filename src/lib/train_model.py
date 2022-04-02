@@ -66,6 +66,7 @@ def train_model(
 
     for epoch in range(params["epochs"]):
         losses.reset()
+        neptune_run["train/lr"].log(lr_scheduler.get_lr())
         for batch in dataloader:
             data, target = batch
             data = data.cuda(non_blocking=True)  # asynchronous data transfer
