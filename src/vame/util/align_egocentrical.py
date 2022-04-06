@@ -295,6 +295,7 @@ def alignment(
     check_video=False,
 ):
     # read out data
+    filename = filename.replace(".csv", "")
     data = pd.read_csv(
         os.path.join(path_to_file, "videos", "pose_estimation", filename + ".csv"), skiprows=2
     )
@@ -362,6 +363,7 @@ def egocentric_alignment(
     use_video=False,
     video_format=".mp4",
     check_video=False,
+    override_paths=None,
 ):
     """Happy aligning"""
     # config parameters
@@ -369,7 +371,10 @@ def egocentric_alignment(
     cfg = read_config(config_file)
 
     path_to_file = cfg["project_path"]
-    filename = cfg["video_sets"]
+    if override_paths is not None:
+        filename = override_paths
+    else:
+        filename = cfg["video_sets"]
     confidence = cfg["pose_confidence"]
     video_format = video_format
     crop_size = crop_size
