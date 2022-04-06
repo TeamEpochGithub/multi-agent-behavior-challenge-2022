@@ -59,8 +59,9 @@ def submission_embeddings(
 
         X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["frame_increment"])])
         # probably works only for the perceiver for now
-        embs = model(torch.Tensor(X).cuda().unsqueeze(0),
-            return_embeddings=config["return_embeddings"])[0]
+        embs = model(
+                torch.Tensor(X).cuda().unsqueeze(0),
+                return_embeddings=config["return_embeddings"])[0]
 
         for i in range(len(keypoints)):
 
@@ -69,8 +70,9 @@ def submission_embeddings(
                 # ideally should be 1 but really long submission time
                 X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
                 # probably works only for the perceiver for now
-                embs = model(torch.Tensor(X).cuda().unsqueeze(0),
-                    return_embeddings=config["return_embeddings"])[0]
+                embs = model(
+                        torch.Tensor(X).cuda().unsqueeze(0),
+                        return_embeddings=config["return_embeddings"])[0]
 
         embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
         last = embeddings_model_size
