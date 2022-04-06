@@ -19,7 +19,8 @@ def find_seq(name, sub_sequences):
 
 
 def submission_embeddings(
-    config: dict, sub_clips: dict, model: nn.Module, sub_seq: list, func=None, embd: list = None
+    config: dict, sub_clips: dict, model: nn.Module, sub_seq: list, func=None,
+    embd: list = None
 ) -> dict:
     """
     Creates a ready for submission dict with an arbitrary model.
@@ -48,45 +49,54 @@ def submission_embeddings(
     start = 0
     seq_len = config["seq_len"]
 
-    for sequence_key in tqdm(sub_clips["sequences"]):
-        keypoints = sub_clips["sequences"][sequence_key]["keypoints"]
-        embeddings = np.empty((len(keypoints), embeddings_size), dtype=np.float32)
+    for sequence_key, sequence in tqdm(zip(sub_clips["sequences"], sub_seq)):
 
-        X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["frame_increment"])])
+        frames_seq, _ = dataset_from_frames(sequence.frames, config["length"], 
+                                            config["every Nth"], config["stride"], 0)
+        frames_seq = torch.tensor(frames_seq, dtype=torch.float32).cuda()
+        keypoints = sub_clips["sequences"][sequence_key]["keypoints"]
+        #embeddings = np.empty((len(keypoints), embeddings_size), dtype=np.float32)
+
+        #X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
         # probably works only for the perceiver for now
         embs = model(
-            torch.Tensor(X).cuda().unsqueeze(0), return_embeddings=config["return_embeddings"]
+            frames_seq, return_embeddings=config["return_embeddings"]
         )[0]
 
-        for i in range(len(keypoints)):
+        #for i in range(len(keypoints)):
 
-            if i % config["freq_embd_calc"] == 0 and i + seq_len < len(keypoints):
-                # in the initial notebook config["freq_embd_calc"] is 100,
-                # ideally should be 1 but really long submission time
-                X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
-                # probably works only for the perceiver for now
-                embs = model(
-                    torch.Tensor(X).cuda().unsqueeze(0),
-                    return_embeddings=config["return_embeddings"],
-                )[0]
+        #    if i % config["freq_embd_calc"] == 0 and i + seq_len < len(keypoints):
+        #        # in the initial notebook config["freq_embd_calc"] is 100,
+        #        # ideally should be 1 but really long submission time
+        #        X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
+        #        # probably works only for the perceiver for now
+        #        embs = model(
+        #            torch.Tensor(X).cuda().unsqueeze(0),
+        #            return_embeddings=config["return_embeddings"],
+        #        )[0]
 
-        embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
+        #embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
+        #last = embeddings_model_size
+        #for f in func:
+        #    temp_values = f(keypoints[i].flatten())
+        #    embeddings[i, last : last + temp_values.shape[0]] = temp_values
+        #    last += temp_values.shape[0]
+
+        embs = embs.detach().cpu().numpy()
+        embeddings[:, :embeddings_model_size] = np.repeat(embs, config["stride"], axis=0)
+
+        seq_index = find_seq(sequence_key, sub_seq)
+        # in the notebook you have full energies here, needs to be passed in embd
+        # also reshaping needs to be done before and passed directly in embd
         last = embeddings_model_size
-        for f in func:
-            temp_values = f(keypoints[i].flatten())
-            embeddings[i, last : last + temp_values.shape[0]] = temp_values
-            last += temp_values.shape[0]
+        for e in embd:
+            embeddings[:, last : last + e.shape[1]] = e[seq_index]
+            last += e.shape[1]
 
-    seq_index = find_seq(sequence_key, sub_seq)
-    # in the notebook you have full energies here, needs to be passed in embd
-    # also reshaping needs to be done before and passed directly in embd
-    for e in embd:
-        embeddings[:, last : last + e.shape[1]] = e[seq_index]
-
-    end = start + len(keypoints)
-    embeddings_array[start:end] = embeddings
-    frame_number_map[sequence_key] = (start, end)
-    start = end
+        end = start + len(keypoints)
+        embeddings_array[start:end] = embeddings
+        frame_number_map[sequence_key] = (start, end)
+        start = end
 
     assert end == num_total_frames
     submission_dict = {"frame_number_map": frame_number_map, "embeddings": embeddings_array}
