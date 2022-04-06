@@ -2,14 +2,14 @@ from typing import List
 
 import numpy as np
 import torch
-from sklearn.preprocessing import minmax_scale
 from tqdm import tqdm
+from sklearn.preprocessing import minmax_scale
 
 from lib.sequence import Sequence
 
 
 def dataset_from_frames(
-    frames: np.ndarray, length: int, every_nth: int, stride: int, pad_to_ans: int
+        frames: np.ndarray, length: int, every_nth: int, stride: int, pad_to_ans: int
 ):
     """
     Creates a dataset for future prediction models
@@ -63,7 +63,7 @@ def _gen_tensor_dataset(sequences, dataset_config):
 
 
 def full_tensor_train_test(
-    sequences: List[Sequence], dataset_config: dict, test_fraction=0.2, seed=42
+        sequences: List[Sequence], dataset_config: dict, test_fraction=0.2, seed=42
 ) -> [torch.tensor] * 4:
     """
     Creates a dataset from multiple sequences and does a ttsplit, ensuring the frames from one
@@ -89,9 +89,11 @@ def full_tensor_train_test(
 
     x_all = torch.cat((x_train_rs, x_test_rs, y_train, y_test), dim=0)
     x_all_scaled = minmax_scale(x_all)
-    x_train_rs_sc, x_test_rs_sc, y_train, y_test = torch.split(
-        x_all_scaled, [x_train_rs.shape[0], x_test_rs.shape[0], y_train.shape[0], y_test.shape[0]]
-    )
+    x_all_scaled = torch.tensor(x_all_scaled)
+    x_train_rs_sc, x_test_rs_sc, y_train, y_test = torch.split(x_all_scaled, [x_train_rs.shape[0],
+                                                                              x_test_rs.shape[0],
+                                                                              y_train.shape[0],
+                                                                              y_test.shape[0]])
 
     x_train = torch.reshape(x_train_rs_sc, x_train.shape)
     x_test = torch.reshape(x_test_rs_sc, x_test.shape)
