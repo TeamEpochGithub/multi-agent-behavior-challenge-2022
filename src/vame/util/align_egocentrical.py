@@ -384,7 +384,7 @@ def egocentric_alignment(
     for file in tqdm.tqdm(
         filename, disable=not True, desc="Align frames in file", total=len(filename)
     ):
-        print("Aligning data %s, Pose confidence value: %.2f" % (file, confidence))
+        # print("Aligning data %s, Pose confidence value: %.2f" % (file, confidence))
         egocentric_time_series, frames = alignment(
             path_to_file,
             file,
