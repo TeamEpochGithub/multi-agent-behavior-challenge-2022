@@ -88,7 +88,8 @@ def full_tensor_train_test(
 
     x_all = torch.cat((x_train_rs, x_test_rs, y_train, y_test), dim=0)
     x_all_scaled = minmax_scale(x_all)
-    x_train_rs_sc, x_test_rs_sc, y_train, y_test = torch.split(x_all_scaled, [x_train_rs.shape[0], x_test_rs.shape[0], y_train.shape[0], y_test.shape[0]])
+    x_train_rs_sc, x_test_rs_sc, y_train, y_test = torch.split(x_all_scaled, 
+    [x_train_rs.shape[0], x_test_rs.shape[0], y_train.shape[0], y_test.shape[0]])
 
     x_train = torch.reshape(x_train_rs_sc, x_train.shape)
     x_test = torch.reshape(x_test_rs_sc, x_test.shape)
