@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 
 
@@ -24,7 +26,7 @@ class Sequence:
             raise ValueError(f"Incorrect mouse shape, expected (24, ), got {mouse.shape}")
         self.frames[frame_idx][mouse_idx * 24 : (mouse_idx + 1) * 24] = mouse
 
-    def convert_to_vame_frame(self, single_mouse_embedding=True) -> np.ndarray:
+    def convert_to_vame_frame(self, single_mouse_embedding=True) -> Tuple[str, np.ndarray]:
         """
         Converts the sequence instance into a vame-compatible 2d numpy array
         :param single_mouse_embedding: true to isolate individual mice,
@@ -52,7 +54,7 @@ class Sequence:
                     data_arr[data_idx, :] = row
                 else:
                     data_arr[mouse_idx, f_num, :] = row
-        return data_arr
+        return self.name, data_arr
 
     @staticmethod
     def mouse_from_frame(frame: np.ndarray, mouse_idx) -> np.ndarray:

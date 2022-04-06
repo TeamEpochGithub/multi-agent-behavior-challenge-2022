@@ -1,5 +1,6 @@
 import copy
 import itertools
+from datetime import datetime
 from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -258,6 +259,76 @@ def make_sequences(sub_clips, train_data):
     for key, value in sub_clips["sequences"].items():
         submission_sequences.append(Sequence(key, value["keypoints"]))
     return train_sequences, submission_sequences
+
+
+def save_seqs_to_vame(sequences: [Sequence]) -> bool:
+    """
+    Convert list of Sequences into a complete VAME DataFrame
+    :param single_mouse_embedding:
+    :param sequences: list of sequences
+    :return: VAME compatible dataframe OR tuple of three dataframes, one for each mouse
+    """
+    n_s = len(sequences)
+    # if single_mouse_embedding:
+    #     vame_data = np.zeros((n_s, 5400, 36), dtype=np.float16)
+    # else:
+    #     vame_data = np.zeros((n_s, 3, 1800, 36), dtype=np.float16)
+    top = [f"vame-{n_s}sequences"]
+    mouse_kpt_names = [
+        "nose",
+        "left ear",
+        "right ear",
+        "neck",
+        "left forepaw",
+        "right forepaw",
+        "center back",
+        "left hindpaw",
+        "right hindpaw",
+        "tail base",
+        "tail middle",
+        "tail tip",
+    ]
+    x_y_l = ["x", "y", "likelihood"]
+    v_d_cols = pd.MultiIndex.from_tuples(itertools.product(top, mouse_kpt_names, x_y_l))
+
+    for idx, seq in tqdm(enumerate(sequences), total=n_s, desc="Sequences"):
+        seq_name, three_mice = seq.convert_to_vame_frame(False)
+        # (str, (3, 1800, 36))
+        mouse_one = three_mice[0, :, :]
+        mouse_two = three_mice[1, :, :]
+        mouse_three = three_mice[2, :, :]
+
+        df_m1 = pd.DataFrame(data=mouse_one, columns=v_d_cols, dtype=np.float32)
+        df_m2 = pd.DataFrame(data=mouse_two, columns=v_d_cols, dtype=np.float32)
+        df_m3 = pd.DataFrame(data=mouse_three, columns=v_d_cols, dtype=np.float32)
+        mice_dfs = [df_m1, df_m2, df_m3]
+
+        today = datetime.now().strftime("%b%-d-%Y")
+
+        for num, mouse_df in enumerate(mice_dfs):
+            num += 1
+            vame_data_filename = f"{seq_name}-{num}.csv"
+            vame_data_path = (
+                f"../vame/projects/Epoch-VAME-{today}/videos/pose_estimation"
+                f"/{vame_data_filename}"
+            )
+            mouse_df.to_csv(vame_data_path)
+    return True
+
+    # if single_mouse_embedding:
+    #     vame_data = np.reshape(vame_data, (n_s * 5400, 36))
+    #     return pd.DataFrame(data=vame_data, columns=v_d_cols, dtype=np.float32)
+    # else:
+    #     v_d_m_1 = vame_data[:, 0, :, :]
+    #     v_d_m_2 = vame_data[:, 1, :, :]
+    #     v_d_m_3 = vame_data[:, 2, :, :]
+    #     v_d_m_1 = np.reshape(v_d_m_1, (n_s * 1800, 36))
+    #     v_d_m_2 = np.reshape(v_d_m_2, (n_s * 1800, 36))
+    #     v_d_m_3 = np.reshape(v_d_m_3, (n_s * 1800, 36))
+    #     df_m1 = pd.DataFrame(data=v_d_m_1, columns=v_d_cols, dtype=np.float32)
+    #     df_m2 = pd.DataFrame(data=v_d_m_2, columns=v_d_cols, dtype=np.float32)
+    #     df_m3 = pd.DataFrame(data=v_d_m_3, columns=v_d_cols, dtype=np.float32)
+    #     return df_m1, df_m2, df_m3
 
 
 def convert_seqs_to_vame(

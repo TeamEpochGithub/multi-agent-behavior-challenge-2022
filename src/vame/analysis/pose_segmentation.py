@@ -104,9 +104,10 @@ def embedd_latent_vectors(cfg, files, model, legacy, batch_size=10):
         print(np.shape(data))  # (24, 6724800) for 1 mouse
         # temp_win should be added at the start
         first_frame = data[:, 0]
-        padding_array = np.repeat(first_frame[:, np.newaxis], 2, axis=1)
-        data_padded = np.concatenate([padding_array, data], axis=1)
-        print(np.shape(data_padded))  # (24, 6724800) for 1 mouse
+        padding_array = np.repeat(first_frame[:, np.newaxis], temp_win, axis=1)
+        # Padded data
+        data = np.concatenate([padding_array, data], axis=1)
+        print(np.shape(data))  # (24, 6724800) for 1 mouse
         latent_vector_list = []
         for i in tqdm.tqdm(range(0, data.shape[1], batch_size)):
             # for i in tqdm.tqdm(range(10000)):
