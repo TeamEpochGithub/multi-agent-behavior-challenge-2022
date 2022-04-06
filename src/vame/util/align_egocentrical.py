@@ -181,7 +181,8 @@ def align_mouse(
                 )
             )
 
-    for idx in tqdm.tqdm(range(frame_count), disable=not True, desc="Align frames"):
+    # for idx in tqdm.tqdm(range(frame_count), disable=not True, desc="Align frames"):
+    for idx in range(frame_count):
 
         if use_video:
             # Read frame
@@ -380,7 +381,9 @@ def egocentric_alignment(
     crop_size = crop_size
 
     # call function and save into your VAME data folder
-    for file in filename:
+    for file in tqdm.tqdm(
+        filename, disable=not True, desc="Align frames in file", total=len(filename)
+    ):
         print("Aligning data %s, Pose confidence value: %.2f" % (file, confidence))
         egocentric_time_series, frames = alignment(
             path_to_file,
