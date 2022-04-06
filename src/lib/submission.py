@@ -61,7 +61,8 @@ def submission_embeddings(
         # probably works only for the perceiver for now
         embs = model(
                 torch.Tensor(X).cuda().unsqueeze(0),
-                return_embeddings=config["return_embeddings"])[0]
+                return_embeddings=config["return_embeddings"]
+                )[0]
 
         for i in range(len(keypoints)):
 
@@ -72,7 +73,8 @@ def submission_embeddings(
                 # probably works only for the perceiver for now
                 embs = model(
                         torch.Tensor(X).cuda().unsqueeze(0),
-                        return_embeddings=config["return_embeddings"])[0]
+                        return_embeddings=config["return_embeddings"]
+                        )[0]
 
         embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
         last = embeddings_model_size
