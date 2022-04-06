@@ -101,12 +101,15 @@ def embedd_latent_vectors(cfg, files, model, legacy, batch_size=10):
     for file in files:
         print("Infer data for file %s" % file)
         data = np.load(os.path.join(project_path, "data", file, file + "-PE-seq-clean.npy"))
+        print(np.shape(data))
+        # padding_array =
+        data_padded = np.concatenate([], axis=1)
         latent_vector_list = []
-        for i in tqdm.tqdm(range(data.shape[1] - temp_win, batch_size)):
+        for i in tqdm.tqdm(range(0, data.shape[1], batch_size)):
             # for i in tqdm.tqdm(range(10000)):
             batch_samples = []
             for j in range(i, i + batch_size):
-                if j >= data.shape[1] - temp_win:
+                if j >= data.shape[1]:
                     break
                 data_sample_np = data[:, j : temp_win + j].T
                 data_sample_np = np.reshape(data_sample_np, (1, temp_win, num_features))

@@ -10,15 +10,13 @@ Licensed under GNU General Public License v3.0
 """
 import os
 
-import torch
-
 import vame
 
 # These paths have to be set manually
 working_directory = f"{os.getcwd()}\\projects"
 project = "Epoch-VAME"
-# videos = ['\\multi-agent-behavior-challenge-2022\\src\\vame\\videos']
-today = "Mar17-2022"
+videos = ["\\multi-agent-behavior-challenge-2022\\src\\vame\\videos"]
+today = "Mar23-2022"
 videos = [f"{os.getcwd()}\\..\\data\\videos"]
 
 # Initialize your project
@@ -48,22 +46,22 @@ vame.egocentric_alignment(config, pose_ref_index=[0, 5])
 
 # If your experiment is by design egocentrical (e.g. head-fixed experiment on treadmill etc)
 # you can use the following to convert your .csv to a .npy array, ready to train vame on it
-vame.csv_to_numpy(
-    config, datapath=f"{working_directory}\\{project}-" f"{today}\\videos\\pose_estimation\\"
-)
+# vame.csv_to_numpy(
+#     config, datapath=f"{working_directory}\\{project}-" f"{today}\\videos\\pose_estimation\\"
+# )
 
 # Step 1.3:
 # create the training set for the VAME model
 # vame.create_trainset(config)
 
-print(torch.cuda.is_available())
-# Step 2:
-# Train VAME:
-vame.train_model(config)
-
-# Step 3:
-# Evaluate model
-vame.evaluate_model(config)
+# print(torch.cuda.is_available())
+# # Step 2:
+# # Train VAME:
+# vame.train_model(config)
+#
+# # Step 3:
+# # Evaluate model
+# vame.evaluate_model(config)
 
 # Step 4:
 # Segment motifs/pose
