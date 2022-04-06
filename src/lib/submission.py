@@ -18,8 +18,14 @@ def find_seq(name, sub_sequences):
     raise ValueError
 
 
-def submission_embeddings(config: dict, sub_clips: dict, model: nn.Module,
-    sub_seq: list, func=None, embd: list = None) -> dict:
+def submission_embeddings(
+        config: dict,
+        sub_clips: dict,
+        model: nn.Module,
+        sub_seq: list,
+        func=None,
+        embd: list = None
+) -> dict:
     """
     Creates a ready for submission dict with an arbitrary model.
     (works only for the perceiver for now)
@@ -65,8 +71,6 @@ def submission_embeddings(config: dict, sub_clips: dict, model: nn.Module,
                 # probably works only for the perceiver for now
                 embs = model(torch.Tensor(X).cuda().unsqueeze(0),
                     return_embeddings=config["return_embeddings"])[0]
-
-                    
 
         embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
         last = embeddings_model_size
