@@ -101,9 +101,12 @@ def embedd_latent_vectors(cfg, files, model, legacy, batch_size=10):
     for file in files:
         print("Infer data for file %s" % file)
         data = np.load(os.path.join(project_path, "data", file, file + "-PE-seq-clean.npy"))
-        print(np.shape(data))
-        # padding_array =
-        data_padded = np.concatenate([], axis=1)
+        print(np.shape(data))  # (24, 6724800) for 1 mouse
+        # temp_win should be added at the start
+        first_frame = data[:, 0]
+        padding_array = np.repeat(first_frame[:, np.newaxis], 2, axis=1)
+        data_padded = np.concatenate([padding_array, data], axis=1)
+        print(np.shape(data_padded))  # (24, 6724800) for 1 mouse
         latent_vector_list = []
         for i in tqdm.tqdm(range(0, data.shape[1], batch_size)):
             # for i in tqdm.tqdm(range(10000)):
