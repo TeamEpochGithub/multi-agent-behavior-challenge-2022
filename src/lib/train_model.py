@@ -1,7 +1,12 @@
+import shutil
+
 import torch
-import torch.optim as optim
 from torch import nn
+from torch.optim import Adam, Optimizer
+from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader, Dataset
+
+from lib.util.average_meter import AverageMeter
 
 
 def train_model(
@@ -9,9 +14,12 @@ def train_model(
     dataset: Dataset,
     neptune_run,
     params: dict,
-    dataset_config: dict = None,
+    validation_set: Dataset = None,
+    validation_metric=None,
     criterion=None,
-    optimizer=None,
+    optimizer: Optimizer = None,
+    lr_scheduler=None,
+    lr_gamma=0.9,
     finish_neptune=False,
 ):
     """
@@ -19,53 +27,146 @@ def train_model(
     :param model: torch model, probably a Perceiver
     :param neptune_run: instance of a started neptune run
     :param dataset: torch dataset
-    :param params: dict including values: batch size, epochs
-    :param dataset_config: dict that was used for dataset creation. some values may be added
+    :param params: dict including values: batch size, epochs, learning rate
+    :param validation_set: dataset used to determine model performance. No set is used by default
+        When provided, saves 2 model checkpoints in the current folder: last and best
+    :param validation_metric: metric to determine performance (ONLY greater is better).
+        Default - use loss (smaller is better)
     :param criterion: for training, on cuda. Defaults to MSE
-    :param optimizer: for training. Defaults to Adam with lr from params dict
+    :param optimizer: for training. Defaults to Adam with lr from params dict.
+        When providing optimizer, ensure you call model.cuda() before initializing the optim
+    :param lr_scheduler: class to change lr between epochs. Defaults to Exponential with lr_gamma
+        When providing a scheduler (instance), also provide the optimizer it is configured for
+    :param lr_gamma: gamma parameter for default ExponentialLR scheduler
     :param finish_neptune: whether to stop neptune run
     :return: None
     """
-    # model essentials
-    if not criterion:
-        criterion = torch.nn.MSELoss().cuda()
-    if not optimizer:
-        optimizer = optim.Adam(model.parameters(), lr=params["learning rate"], amsgrad=True)
-
-    # data transformations
-    dataloader = DataLoader(dataset, batch_size=params["batch size"], shuffle=True)
-
     model.cuda()
     model.train()
 
+    losses = AverageMeter()
+    best_score = None
+
+    # model essentials
+    if criterion is None:
+        criterion = torch.nn.MSELoss().cuda()
+    if optimizer is None:
+        optimizer = Adam(model.parameters(), lr=params["learning rate"], amsgrad=True)
+    if lr_scheduler is None:
+        lr_scheduler = ExponentialLR(optimizer, gamma=lr_gamma)
+
+    # data transformations
+    dataloader = DataLoader(dataset, batch_size=params["batch size"], shuffle=True)
+    val_loader = None
+    if validation_set is not None:
+        val_loader = DataLoader(validation_set, batch_size=params["batch size"], shuffle=True)
+
     # log to neptune
     neptune_run["parameters"] = params
-    if dataset_config:
-        # complete Datasets have __len__ implementation, so the warning is wrong
-        # (also read https://github.com/pytorch/pytorch/blob/master/torch/utils/data/sampler.py)
-        # noinspection PyTypeChecker
-        dataset_config["dataset size"] = len(dataset)
-        neptune_run["dataset config"] = dataset_config
 
     for epoch in range(params["epochs"]):
-        running_loss = 0.0
+        losses.reset()
+        neptune_run["train/lr"].log(lr_scheduler.get_last_lr())
         for batch in dataloader:
-            data, answers = batch
-            data = data.cuda()
-            answers = answers.cuda()
+            data, target = batch
+            data = data.cuda(non_blocking=True)  # asynchronous data transfer
+            target = target.cuda(non_blocking=True)
 
             optimizer.zero_grad()
+
             out = model(data)
 
-            loss = criterion(out, answers)
+            loss = criterion(out, target)
             loss.backward()
             optimizer.step()
 
-            running_loss += loss.item()
-        # noinspection PyTypeChecker
-        avg_loss = running_loss / len(dataset)
-        print(f"loss at epoch {epoch}: {avg_loss}")
-        neptune_run["train/loss"].log(avg_loss)
+            losses.update(loss.item(), data.size(0))
+        # change learning rate
+        lr_scheduler.step()
+
+        neptune_run["train/loss"].log(losses.avg)
+        print(f"train loss at epoch {epoch + 1}: {losses.avg}")
+
+        # run on validation set
+        if val_loader is not None:
+            val_loss, val_score = validate(model, val_loader, criterion, validation_metric)
+            model.train()
+
+            best_score, is_best = _compute_best_val_score(
+                best_score, val_loss, val_score, validation_metric
+            )
+            neptune_run["val/loss"].log(val_loss)
+            neptune_run["val/score"].log(val_score)
+            neptune_run["best score"] = best_score
+            print(f"val loss at epoch {epoch + 1}: {val_loss}")
+
+            # save model
+            save_checkpoint(
+                {
+                    "epoch": epoch + 1,
+                    "state_dict": model.state_dict(),
+                    "best_score": best_score,
+                    "optimizer": optimizer.state_dict(),
+                },
+                is_best,
+            )
 
     if finish_neptune:
         neptune_run.stop()
+
+
+def validate(model: nn.Module, val_dataloader: DataLoader, criterion, metric=None):
+    """
+
+    :param model: model to validate
+    :param val_dataloader: validation data
+    :param criterion: loss function
+    :param metric: answer assessment function
+    :return: average loss and metric score
+    """
+    losses = AverageMeter()
+    metric_scores = AverageMeter()
+    model.eval()
+
+    with torch.no_grad():
+        for batch in val_dataloader:
+            data, target = batch
+            data = data.cuda(non_blocking=True)
+            target = target.cuda(non_blocking=True)
+
+            out = model(data)
+
+            loss = criterion(out, target)
+            losses.update(loss.item(), data.size(0))
+            if metric is not None:
+                score = metric(out, target)
+                metric_scores.update(score, data.size(0))
+    return losses.avg, metric_scores.avg
+
+
+def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint.pth.tar"):
+    """
+    saves model to a file
+    :param state: state dict
+    :param is_best:
+    :param filename:
+    :return: None
+    """
+    torch.save(state, filename)
+    if is_best:
+        shutil.copyfile(filename, "model_best.pth.tar")
+
+
+def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) -> (int, bool):
+    if validation_metric is not None:
+        if best_score is None:
+            best_score = val_score
+        is_best = val_score > best_score
+        best_score = max(val_score, best_score)
+    else:
+        # fallback to loss
+        if best_score is None:
+            best_score = val_loss
+        is_best = val_loss < best_score
+        best_score = min(val_loss, best_score)
+    return best_score, is_best
