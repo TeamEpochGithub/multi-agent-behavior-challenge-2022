@@ -81,4 +81,9 @@ def full_tensor_train_test(
 
     x_train, y_train = _gen_tensor_dataset(train, dataset_config)
     x_test, y_test = _gen_tensor_dataset(test, dataset_config)
+
+    x_all = torch.cat((x_train, x_test))
+    x_all_normalized = torch.nn.functional.normalize(x_all, p=2.0, dim=1)
+    x_train, x_test = torch.split(x_all_normalized, [x_train.shape[0], x_test.shape[0]], dim=0)
+    
     return x_train, x_test, y_train, y_test
