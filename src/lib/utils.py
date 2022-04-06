@@ -1,6 +1,5 @@
 import copy
 import itertools
-from datetime import datetime
 from typing import Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -261,7 +260,7 @@ def make_sequences(sub_clips, train_data):
     return train_sequences, submission_sequences
 
 
-def save_seqs_to_vame(sequences: [Sequence]) -> bool:
+def save_seqs_to_vame(sequences: [Sequence], path) -> bool:
     """
     Convert list of Sequences into a complete VAME DataFrame
     :param single_mouse_embedding:
@@ -302,16 +301,10 @@ def save_seqs_to_vame(sequences: [Sequence]) -> bool:
         df_m2 = pd.DataFrame(data=mouse_two, columns=v_d_cols, dtype=np.float32)
         df_m3 = pd.DataFrame(data=mouse_three, columns=v_d_cols, dtype=np.float32)
         mice_dfs = [df_m1, df_m2, df_m3]
-
-        today = datetime.now().strftime("%b%-d-%Y")
-
         for num, mouse_df in enumerate(mice_dfs):
             num += 1
             vame_data_filename = f"{seq_name}-{num}.csv"
-            vame_data_path = (
-                f"../vame/projects/Epoch-VAME-{today}/videos/pose_estimation"
-                f"/{vame_data_filename}"
-            )
+            vame_data_path = f"{path}{vame_data_filename}"
             mouse_df.to_csv(vame_data_path)
     return True
 
