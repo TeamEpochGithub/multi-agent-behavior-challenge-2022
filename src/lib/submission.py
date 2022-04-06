@@ -74,7 +74,7 @@ def submission_embeddings(
             if e[seq_index].shape != (3,):
                 reshaped_e = e[seq_index].reshape(1800, -1)
                 embeddings[:, last : last + reshaped_e.shape[1]] = reshaped_e
-                last += reshaped_e
+                last += reshaped_e.shape[1]
             else:
                 embeddings[:, last:last + 3] = e[seq_index]
                 last += 3
