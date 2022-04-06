@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 import torch
 from tqdm import tqdm
+from sklearn.preprocessing import minmax_scale
 
 from lib.sequence import Sequence
 
@@ -82,8 +83,14 @@ def full_tensor_train_test(
     x_train, y_train = _gen_tensor_dataset(train, dataset_config)
     x_test, y_test = _gen_tensor_dataset(test, dataset_config)
 
-    x_all = torch.cat((x_train, x_test))
-    x_all_normalized = torch.nn.functional.normalize(x_all, p=2.0, dim=1)
-    x_train, x_test = torch.split(x_all_normalized, [x_train.shape[0], x_test.shape[0]], dim=0)
+    x_train_rs = torch.reshape(x_train, (x_train.shape[0] * x_train.shape[1], x_train.shape[2]))
+    x_test_rs = torch.reshape(x_test, (x_test.shape[0] * x_test.shape[1], x_test.shape[2]))
+
+    x_all = torch.cat((x_train_rs, x_test_rs, y_train, y_test), dim=0)
+    x_all_scaled = minmax_scale(x_all)
+    x_train_rs_sc, x_test_rs_sc, y_train, y_test = torch.split(x_all_scaled, [x_train_rs.shape[0], x_test_rs.shape[0], y_train.shape[0], y_test.shape[0]])
+
+    x_train = torch.reshape(x_train_rs_sc, x_train.shape)
+    x_test = torch.reshape(x_test_rs_sc, x_test.shape)
 
     return x_train, x_test, y_train, y_test
