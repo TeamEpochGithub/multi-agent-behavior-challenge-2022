@@ -1,6 +1,6 @@
 import numpy as np
-from torch import nn
 import torch
+from torch import nn
 from tqdm import tqdm
 
 
@@ -19,12 +19,7 @@ def find_seq(name, sub_sequences):
 
 
 def submission_embeddings(
-        config: dict,
-        sub_clips: dict,
-        model: nn.Module,
-        sub_seq: list,
-        func=None,
-        embd: list = None
+    config: dict, sub_clips: dict, model: nn.Module, sub_seq: list, func=None, embd: list = None
 ) -> dict:
     """
     Creates a ready for submission dict with an arbitrary model.
@@ -41,13 +36,13 @@ def submission_embeddings(
 
     embeddings_model_size = config["model_embd_size"]
     features_size = config["feature_size"]
-    sub_clips_items = sub_clips['sequences'].items()
-    num_total_frames = np.sum([seq['keypoints'].shape[0] for _, seq in sub_clips_items])
+    sub_clips_items = sub_clips["sequences"].items()
+    num_total_frames = np.sum([seq["keypoints"].shape[0] for _, seq in sub_clips_items])
     embeddings_size = embeddings_model_size + features_size
     embeddings_array = np.empty((num_total_frames, embeddings_size), dtype=np.float32)
 
     if embeddings_size > 128:
-        raise ValueError(f'The maximum number of embeddings is 128, you have {embeddings_size}')
+        raise ValueError(f"The maximum number of embeddings is 128, you have {embeddings_size}")
 
     frame_number_map = {}
     start = 0
@@ -60,9 +55,8 @@ def submission_embeddings(
         X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["frame_increment"])])
         # probably works only for the perceiver for now
         embs = model(
-                torch.Tensor(X).cuda().unsqueeze(0),
-                return_embeddings=config["return_embeddings"]
-                )[0]
+            torch.Tensor(X).cuda().unsqueeze(0), return_embeddings=config["return_embeddings"]
+        )[0]
 
         for i in range(len(keypoints)):
 
@@ -72,22 +66,22 @@ def submission_embeddings(
                 X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
                 # probably works only for the perceiver for now
                 embs = model(
-                        torch.Tensor(X).cuda().unsqueeze(0),
-                        return_embeddings=config["return_embeddings"]
-                        )[0]
+                    torch.Tensor(X).cuda().unsqueeze(0),
+                    return_embeddings=config["return_embeddings"],
+                )[0]
 
         embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
         last = embeddings_model_size
         for f in func:
             temp_values = f(keypoints[i].flatten())
-            embeddings[i, last: last + temp_values.shape[0]] = temp_values
+            embeddings[i, last : last + temp_values.shape[0]] = temp_values
             last += temp_values.shape[0]
 
     seq_index = find_seq(sequence_key, sub_seq)
     # in the notebook you have full energies here, needs to be passed in embd
     # also reshaping needs to be done before and passed directly in embd
     for e in embd:
-        embeddings[:, last: last + e.shape[1]] = e[seq_index]
+        embeddings[:, last : last + e.shape[1]] = e[seq_index]
 
     end = start + len(keypoints)
     embeddings_array[start:end] = embeddings
@@ -108,40 +102,40 @@ def validate_submission(submission, submission_clips):
         print("Submission should be dict")
         return False
 
-    if 'frame_number_map' not in submission:
+    if "frame_number_map" not in submission:
         print("Frame number map missing")
         return False
 
-    if 'embeddings' not in submission:
-        print('Embeddings array missing')
+    if "embeddings" not in submission:
+        print("Embeddings array missing")
         return False
-    elif not isinstance(submission['embeddings'], np.ndarray):
+    elif not isinstance(submission["embeddings"], np.ndarray):
         print("Embeddings should be a numpy array")
         return False
-    elif not len(submission['embeddings'].shape) == 2:
+    elif not len(submission["embeddings"].shape) == 2:
         print("Embeddings should be 2D array")
         return False
-    elif not submission['embeddings'].shape[1] <= 128:
+    elif not submission["embeddings"].shape[1] <= 128:
         print("Embeddings too large, max allowed is 128")
         return False
-    elif not isinstance(submission['embeddings'][0, 0], np.float32):
+    elif not isinstance(submission["embeddings"][0, 0], np.float32):
         print("Embeddings are not float32")
         return False
 
     total_clip_length = 0
-    for key in submission_clips['sequences']:
-        start, end = submission['frame_number_map'][key]
-        clip_length = submission_clips['sequences'][key]['keypoints'].shape[0]
+    for key in submission_clips["sequences"]:
+        start, end = submission["frame_number_map"][key]
+        clip_length = submission_clips["sequences"][key]["keypoints"].shape[0]
         total_clip_length += clip_length
         if not end - start == clip_length:
-            print(f'Frame number map for clip {key} does not match clip length')
+            print(f"Frame number map for clip {key} does not match clip length")
             return False
 
-    if not len(submission['embeddings']) == total_clip_length:
+    if not len(submission["embeddings"]) == total_clip_length:
         print("Emebddings length doesn't match submission clips total length")
         return False
 
-    if not np.isfinite(submission['embeddings']).all():
+    if not np.isfinite(submission["embeddings"]).all():
         print("Emebddings contains NaN or infinity")
         return False
 
