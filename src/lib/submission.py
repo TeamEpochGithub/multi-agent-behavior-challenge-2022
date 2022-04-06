@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch import nn
 from tqdm import tqdm
+from lib.perceiver_data import dataset_from_frames
 
 
 def find_seq(name, sub_sequences):
@@ -51,19 +52,19 @@ def submission_embeddings(
 
     for sequence_key, sequence in tqdm(zip(sub_clips["sequences"], sub_seq)):
 
-        frames_seq, _ = dataset_from_frames(sequence.frames, config["length"], 
+        frames_seq, _ = dataset_from_frames(sequence.frames, config["length"],
                                             config["every Nth"], config["stride"], 0)
         frames_seq = torch.tensor(frames_seq, dtype=torch.float32).cuda()
         keypoints = sub_clips["sequences"][sequence_key]["keypoints"]
-        #embeddings = np.empty((len(keypoints), embeddings_size), dtype=np.float32)
+        embeddings = np.empty((len(keypoints), embeddings_size), dtype=np.float32)
 
-        #X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
+        # X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
         # probably works only for the perceiver for now
         embs = model(
             frames_seq, return_embeddings=config["return_embeddings"]
         )[0]
 
-        #for i in range(len(keypoints)):
+        # for i in range(len(keypoints)):
 
         #    if i % config["freq_embd_calc"] == 0 and i + seq_len < len(keypoints):
         #        # in the initial notebook config["freq_embd_calc"] is 100,
@@ -75,9 +76,9 @@ def submission_embeddings(
         #            return_embeddings=config["return_embeddings"],
         #        )[0]
 
-        #embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
-        #last = embeddings_model_size
-        #for f in func:
+        # embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
+        # last = embeddings_model_size
+        # for f in func:
         #    temp_values = f(keypoints[i].flatten())
         #    embeddings[i, last : last + temp_values.shape[0]] = temp_values
         #    last += temp_values.shape[0]
