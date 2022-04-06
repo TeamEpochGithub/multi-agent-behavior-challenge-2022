@@ -58,30 +58,9 @@ def submission_embeddings(
         keypoints = sub_clips["sequences"][sequence_key]["keypoints"]
         embeddings = np.empty((len(keypoints), embeddings_size), dtype=np.float32)
 
-        # X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
-        # probably works only for the perceiver for now
         embs = model(
             frames_seq, return_embeddings=config["return_embeddings"]
-        )[0]
-
-        # for i in range(len(keypoints)):
-
-        #    if i % config["freq_embd_calc"] == 0 and i + seq_len < len(keypoints):
-        #        # in the initial notebook config["freq_embd_calc"] is 100,
-        #        # ideally should be 1 but really long submission time
-        #        X = np.array([keypoints[i].flatten() for i in range(0, seq_len, config["fr_inc"])])
-        #        # probably works only for the perceiver for now
-        #        embs = model(
-        #            torch.Tensor(X).cuda().unsqueeze(0),
-        #            return_embeddings=config["return_embeddings"],
-        #        )[0]
-
-        # embeddings[i, :embeddings_model_size] = embs.detach().cpu().numpy()
-        # last = embeddings_model_size
-        # for f in func:
-        #    temp_values = f(keypoints[i].flatten())
-        #    embeddings[i, last : last + temp_values.shape[0]] = temp_values
-        #    last += temp_values.shape[0]
+        )
 
         embs = embs.detach().cpu().numpy()
         embeddings[:, :embeddings_model_size] = np.repeat(embs, config["stride"], axis=0)
@@ -90,9 +69,27 @@ def submission_embeddings(
         # in the notebook you have full energies here, needs to be passed in embd
         # also reshaping needs to be done before and passed directly in embd
         last = embeddings_model_size
+        # precomputed features 
         for e in embd:
-            embeddings[:, last : last + e.shape[1]] = e[seq_index]
-            last += e.shape[1]
+            if e[seq_index].shape != (3,):
+                reshaped_e = e[seq_index].reshape(1800, -1)
+                embeddings[:, last : last + reshaped_e.shape[1]] = reshaped_e
+                last += reshaped_e
+            else:
+                embeddings[:, last:last + 3] = e[seq_index]
+                last += 3
+
+        # single frame features
+        if config["use_single_frame"]:
+            if func == None:
+                raise ValueError("You have not passed any functions in func.")
+
+            for i in range(len(keypoints)):
+                lastx = last
+                for f in func:
+                    temp = f(keypoints[i].flatten())
+                    embeddings[i, lastx: lastx + temp.shape[0]] = temp
+                    lastx = lastx + temp.shape[0]
 
         end = start + len(keypoints)
         embeddings_array[start:end] = embeddings
@@ -101,6 +98,9 @@ def submission_embeddings(
 
     assert end == num_total_frames
     submission_dict = {"frame_number_map": frame_number_map, "embeddings": embeddings_array}
+
+    if validate_submission(submission_dict, sub_clips) == False:
+        raise Exception("Your submission dictionary did not pass the validation script")
 
     return submission_dict
 
