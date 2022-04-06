@@ -392,9 +392,9 @@ def egocentric_alignment(
             use_video=use_video,
             check_video=check_video,
         )
-        save_path = os.path.join(path_to_file, "data", file, file + "-PE-seq.npy")
-        os.makedirs(save_path)
-        np.save(save_path, egocentric_time_series)
+        save_dir = os.path.join(path_to_file, "data", file)
+        os.makedirs(save_dir)
+        np.save(os.path.join(save_dir, file + "-PE-seq.npy"), egocentric_time_series)
     #        np.save(os.path.join(path_to_file,'data/',file,"",file+'-PE-seq.npy',
     #        egocentric_time_series))
 
