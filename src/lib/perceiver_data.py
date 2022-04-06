@@ -85,5 +85,5 @@ def full_tensor_train_test(
     x_all = torch.cat((x_train, x_test))
     x_all_normalized = torch.nn.functional.normalize(x_all, p=2.0, dim=1)
     x_train, x_test = torch.split(x_all_normalized, [x_train.shape[0], x_test.shape[0]], dim=0)
-    
+
     return x_train, x_test, y_train, y_test
