@@ -7,28 +7,31 @@ Original file is located at
     https://colab.research.google.com/drive/1XQr8Sc-LYG2MiB3tyq2WjCK1QWGGTB7Q
 """
 
-#pip install einops
+# pip install einops
 
-from math import pi, log
 from functools import wraps
+from math import pi
 
 import torch
-from torch import nn, einsum
 import torch.nn.functional as F
-
 from einops import rearrange, repeat
 from einops.layers.torch import Reduce
-
+from torch import einsum, nn
 
 
 def exists(val):
     return val is not None
+
+
 def default(val, d):
     return val if exists(val) else d
+
+
 # helper classes
 
+
 class PreNorm(nn.Module):
-    def __init__(self, dim, fn, context_dim = None):
+    def __init__(self, dim, fn, context_dim=None):
         super().__init__()
         self.fn = fn
         # layer norm of a matrix
@@ -40,102 +43,103 @@ class PreNorm(nn.Module):
         x = self.norm(x)
 
         if exists(self.norm_context):
-            context = kwargs['context']
+            context = kwargs["context"]
             normed_context = self.norm_context(context)
-            kwargs.update(context = normed_context)
+            kwargs.update(context=normed_context)
 
         return self.fn(x, **kwargs)
 
+
 class FeedForward(nn.Module):
-    def __init__(self, dim, mult = 4, dropout = 0.):
+    def __init__(self, dim, mult=4, dropout=0.0):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(dim, dim * mult * 2),
-            GEGLU(),
-            nn.Linear(dim * mult, dim),
-            nn.Dropout(dropout)
+            nn.Linear(dim, dim * mult * 2), GEGLU(), nn.Linear(dim * mult, dim), nn.Dropout(dropout)
         )
 
     def forward(self, x):
         return self.net(x)
 
-def fourier_encode(x, max_freq, num_bands = 4):
+
+def fourier_encode(x, max_freq, num_bands=4):
     x = x.unsqueeze(-1)
     device, dtype, orig_x = x.device, x.dtype, x
 
-    scales = torch.linspace(1., max_freq / 2, num_bands, device = device, dtype = dtype)
+    scales = torch.linspace(1.0, max_freq / 2, num_bands, device=device, dtype=dtype)
     scales = scales[(*((None,) * (len(x.shape) - 1)), Ellipsis)]
 
     x = x * scales * pi
-    x = torch.cat([x.sin(), x.cos()], dim = -1)
-    x = torch.cat((x, orig_x), dim = -1)
+    x = torch.cat([x.sin(), x.cos()], dim=-1)
+    x = torch.cat((x, orig_x), dim=-1)
     return x
+
 
 class GEGLU(nn.Module):
     def forward(self, x):
-        x, gates = x.chunk(2, dim = -1)
+        x, gates = x.chunk(2, dim=-1)
         return x * F.gelu(gates)
 
+
 class Attention(nn.Module):
-    def __init__(self, query_dim, context_dim = None, heads = 8, dim_head = 64, dropout = 0.):
+    def __init__(self, query_dim, context_dim=None, heads=8, dim_head=64, dropout=0.0):
         super().__init__()
         inner_dim = dim_head * heads
         context_dim = default(context_dim, query_dim)
 
-        self.scale = dim_head ** -0.5
+        self.scale = dim_head**-0.5
         self.heads = heads
 
-        self.to_q = nn.Linear(query_dim, inner_dim, bias = False)
-        self.to_kv = nn.Linear(context_dim, inner_dim * 2, bias = False)
+        self.to_q = nn.Linear(query_dim, inner_dim, bias=False)
+        self.to_kv = nn.Linear(context_dim, inner_dim * 2, bias=False)
 
         self.dropout = nn.Dropout(dropout)
         self.to_out = nn.Linear(inner_dim, query_dim)
 
-    def forward(self, x, context = None, mask = None):
+    def forward(self, x, context=None, mask=None):
         h = self.heads
 
         q = self.to_q(x)
         context = default(context, x)
-        k, v = self.to_kv(context).chunk(2, dim = -1)
+        k, v = self.to_kv(context).chunk(2, dim=-1)
 
+        q, k, v = map(lambda t: rearrange(t, "b n (h d) -> (b h) n d", h=h), (q, k, v))
 
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h = h), (q, k, v))
-
-        sim = einsum('b i d, b j d -> b i j', q, k) * self.scale
+        sim = einsum("b i d, b j d -> b i j", q, k) * self.scale
 
         if exists(mask):
-            mask = rearrange(mask, 'b ... -> b (...)')
+            mask = rearrange(mask, "b ... -> b (...)")
             # max negative value
             max_neg_value = -torch.finfo(sim.dtype).max
 
-            mask = repeat(mask, 'b j -> (b h) () j', h = h)
-            
+            mask = repeat(mask, "b j -> (b h) () j", h=h)
+
             sim.masked_fill_(~mask, max_neg_value)
 
         # attention, what we cannot get enough of
-        attn = sim.softmax(dim = -1)
+        attn = sim.softmax(dim=-1)
         attn = self.dropout(attn)
 
-        out = einsum('b i j, b j d -> b i d', attn, v)
-        out = rearrange(out, '(b h) n d -> b n (h d)', h = h)
+        out = einsum("b i j, b j d -> b i d", attn, v)
+        out = rearrange(out, "(b h) n d -> b n (h d)", h=h)
         return self.to_out(out)
-
 
 
 def cache_fn(f):
     cache = dict()
-    # wrap a function 
+    # wrap a function
     @wraps(f)
-    def cached_fn(*args, _cache = True, key = None, **kwargs):
-        if not _cache: 
+    def cached_fn(*args, _cache=True, key=None, **kwargs):
+        if not _cache:
             return f(*args, **kwargs)
         nonlocal cache
         if key in cache:
             return cache[key]
         result = f(*args, **kwargs)
         cache[key] = result
-        return result 
+        return result
+
     return cached_fn
+
 
 # the class perceiver inherit from nn.Module which is a class help with RNN
 class Perceiver(nn.Module):
@@ -145,21 +149,21 @@ class Perceiver(nn.Module):
         num_freq_bands,
         depth,
         max_freq,
-        input_channels = 3,
-        input_axis = 2,
-        num_latents = 512,
-        latent_dim = 512,
-        cross_heads = 1,
-        latent_heads = 8,
-        cross_dim_head = 64,
-        latent_dim_head = 64,
-        num_classes = 1000,
-        attn_dropout = 0.,
-        ff_dropout = 0.,
-        weight_tie_layers = False,
-        fourier_encode_data = True,
-        self_per_cross_attn = 1,
-        final_classifier_head = True
+        input_channels=3,
+        input_axis=2,
+        num_latents=512,
+        latent_dim=512,
+        cross_heads=1,
+        latent_heads=8,
+        cross_dim_head=64,
+        latent_dim_head=64,
+        num_classes=1000,
+        attn_dropout=0.0,
+        ff_dropout=0.0,
+        weight_tie_layers=False,
+        fourier_encode_data=True,
+        self_per_cross_attn=1,
+        final_classifier_head=True
     ):
         """The shape of the final attention mechanism will be:
         depth * (cross attention -> self_per_cross_attn * self attention)
@@ -200,47 +204,69 @@ class Perceiver(nn.Module):
         # parameters can be seen as latents with dimension with gradient function
         self.latents = nn.Parameter(torch.randn(num_latents, latent_dim))
 
-        get_cross_attn = lambda: PreNorm(latent_dim, Attention(latent_dim, input_dim, heads = cross_heads, dim_head = cross_dim_head, dropout = attn_dropout), context_dim = input_dim)
-        get_cross_ff = lambda: PreNorm(latent_dim, FeedForward(latent_dim, dropout = ff_dropout))
-        get_latent_attn = lambda: PreNorm(latent_dim, Attention(latent_dim, heads = latent_heads, dim_head = latent_dim_head, dropout = attn_dropout))
-        get_latent_ff = lambda: PreNorm(latent_dim, FeedForward(latent_dim, dropout = ff_dropout))
+        get_cross_attn = lambda: PreNorm(
+            latent_dim,
+            Attention(
+                latent_dim,
+                input_dim,
+                heads=cross_heads,
+                dim_head=cross_dim_head,
+                dropout=attn_dropout,
+            ),
+            context_dim=input_dim,
+        )
+        get_cross_ff = lambda: PreNorm(latent_dim, FeedForward(latent_dim, dropout=ff_dropout))
+        get_latent_attn = lambda: PreNorm(
+            latent_dim,
+            Attention(
+                latent_dim, heads=latent_heads, dim_head=latent_dim_head, dropout=attn_dropout
+            ),
+        )
+        get_latent_ff = lambda: PreNorm(latent_dim, FeedForward(latent_dim, dropout=ff_dropout))
 
-
-        get_cross_attn, get_cross_ff, get_latent_attn, get_latent_ff = map(cache_fn, (get_cross_attn, get_cross_ff, get_latent_attn, get_latent_ff))
+        get_cross_attn, get_cross_ff, get_latent_attn, get_latent_ff = map(
+            cache_fn, (get_cross_attn, get_cross_ff, get_latent_attn, get_latent_ff)
+        )
 
         self.layers = nn.ModuleList([])
         for i in range(depth):
             should_cache = i > 0 and weight_tie_layers
-            cache_args = {'_cache': should_cache}
+            cache_args = {"_cache": should_cache}
 
             self_attns = nn.ModuleList([])
 
             for block_ind in range(self_per_cross_attn):
-                self_attns.append(nn.ModuleList([
-                    get_latent_attn(**cache_args, key = block_ind),
-                    get_latent_ff(**cache_args, key = block_ind)
-                ]))
+                self_attns.append(
+                    nn.ModuleList(
+                        [
+                            get_latent_attn(**cache_args, key=block_ind),
+                            get_latent_ff(**cache_args, key=block_ind),
+                        ]
+                    )
+                )
 
-            self.layers.append(nn.ModuleList([
-                get_cross_attn(**cache_args),
-                get_cross_ff(**cache_args),
-                self_attns
-            ]))
+            self.layers.append(
+                nn.ModuleList(
+                    [get_cross_attn(**cache_args), get_cross_ff(**cache_args), self_attns]
+                )
+            )
 
-        self.to_logits = nn.Sequential(
-            Reduce('b n d -> b d', 'mean'),
-            nn.LayerNorm(latent_dim),
-            nn.Linear(latent_dim, num_classes)
-        ) if final_classifier_head else nn.Identity()
+        self.to_logits = (
+            nn.Sequential(
+                Reduce("b n d -> b d", "mean"),
+                nn.LayerNorm(latent_dim),
+                nn.Linear(latent_dim, num_classes),
+            )
+            if final_classifier_head
+            else nn.Identity()
+        )
 
+        self.reduce_mean = Reduce("b n d -> b d", "mean")
 
-
-        self.reduce_mean = Reduce('b n d -> b d', 'mean')
-
-    # def configure_optimizers(self,train_config): 
+    # def configure_optimizers(self,train_config):
     #   """
     #   This long function is unfortunally doing something
-    #   we are separating out all parameters of the model 
+    #   we are separating out all parameters of the model
     #   weight decay for regularization and those that
     #   we are then returning the pytorch optimization object
     #   """
@@ -250,7 +276,7 @@ class Perceiver(nn.Module):
     #   no_decay = set()
 
     #   whitelist_weight_modules = (torch.nn.Linear, )
-    #   # may be more 
+    #   # may be more
     #   blacklist_weight_modules = (torch.nn.LayerNorm, )
 
     #   for mn , m in self.named_parameters():
@@ -262,11 +288,11 @@ class Perceiver(nn.Module):
     #           no_decay.add(fpn)
     #           # need to fill in
     #         elif pn.endswith('weight') and isinstanceOf():
-    #           #weights of whitelist modeules will 
+    #           #weights of whitelist modeules will
     #           decay.add(fpn)
     #           # need to fill in
     #         elif pn.endswith('weight') and instance():
-    #           #weights of blacklist modeules will 
+    #           #weights of blacklist modeules will
     #           no_decay.add(fpn)
 
     #   # special case the latents won't be decayed #<<
@@ -280,7 +306,6 @@ class Perceiver(nn.Module):
     #   #need to fill in
     #   assert len(param_dict.keys()- union_params) == 0
 
-
     #   #create the pytorch optmizer object
     #   optim_groups = {
     #       # maybe needs to fill in
@@ -291,41 +316,36 @@ class Perceiver(nn.Module):
     #   optimizer = torch.optim.AdamW(optim_groups, lr =)
     #   return optimizer
 
-
-
-
-
-
-    def forward(
-        self,
-        data,
-        mask = None,
-        return_embeddings = False
-    ):
+    def forward(self, data, mask=None, return_embeddings=False):
         b, *axis, _, device, dtype = *data.shape, data.device, data.dtype
-        assert len(axis) == self.input_axis, 'input data must have the right number of axis'
+        assert len(axis) == self.input_axis, "input data must have the right number of axis"
 
         if self.fourier_encode_data:
             # calculate fourier encoded positions in the range of [-1, 1], for all axis
 
-            axis_pos = list(map(lambda size: torch.linspace(-1., 1., steps=size, device=device, dtype=dtype), axis))
-            pos = torch.stack(torch.meshgrid(*axis_pos, indexing = 'ij'), dim = -1)
+            axis_pos = list(
+                map(
+                    lambda size: torch.linspace(-1.0, 1.0, steps=size, device=device, dtype=dtype),
+                    axis,
+                )
+            )
+            pos = torch.stack(torch.meshgrid(*axis_pos, indexing="ij"), dim=-1)
             enc_pos = fourier_encode(pos, self.max_freq, self.num_freq_bands)
-            enc_pos = rearrange(enc_pos, '... n d -> ... (n d)')
-            enc_pos = repeat(enc_pos, '... -> b ...', b = b)
+            enc_pos = rearrange(enc_pos, "... n d -> ... (n d)")
+            enc_pos = repeat(enc_pos, "... -> b ...", b=b)
 
-            data = torch.cat((data, enc_pos), dim = -1)
+            data = torch.cat((data, enc_pos), dim=-1)
 
         # concat to channels of data and flatten axis
 
-        data = rearrange(data, 'b ... d -> b (...) d')
+        data = rearrange(data, "b ... d -> b (...) d")
 
-        x = repeat(self.latents, 'n d -> b n d', b = b)
+        x = repeat(self.latents, "n d -> b n d", b=b)
 
         # layers
 
         for cross_attn, cross_ff, self_attns in self.layers:
-            x = cross_attn(x, context = data, mask = mask) + x
+            x = cross_attn(x, context=data, mask=mask) + x
             x = cross_ff(x) + x
 
             for self_attn, self_ff in self_attns:
