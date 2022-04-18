@@ -62,11 +62,12 @@ def grid_search(
                 model_kwargs += f"{key} = {value}, "
             model_kwargs = model_kwargs[:-2]  # remove last comma and space
 
-            # will actually be set inside exec
-            model = nn.Module()
             # In order to handle arbitrary argument names in constructor, the model class is
             # initialized through exec function and the parameters are given as a string
-            exec(f"model = model_class({model_args_as_str}{model_kwargs})")
+            exec_locals = locals()
+            exec(f"model = model_class({model_args_as_str}{model_kwargs})", globals(), exec_locals)
+            # after the exec sets model, we need to get it into the current scope
+            model: nn.Module = exec_locals["model"]
 
             neptune_run = neptune.init(
                 project=neptune_project,
