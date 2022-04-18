@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-import neptune
+import neptune.new as neptune
 from sklearn.model_selection._search import ParameterGrid
 from torch import nn
 from torch.utils.data import Dataset
@@ -39,7 +39,7 @@ def grid_search(
 
     for (key, value) in train_params.items():
         if not isinstance(value, Iterable):
-            train_params[key] = list(value)
+            train_params[key] = [value]
             print("A train parameter is converted to a list")
     train_param_options = ParameterGrid(train_params)
 

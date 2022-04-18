@@ -169,19 +169,19 @@ def load_checkpoint(model, optimizer, path):
 
 def _init_model_essentials(model, params, criterion, optimizer, lr_scheduler, lr_gamma):
     if criterion is None:
-        if params["criterion"]:
+        if "criterion" in params:
             criterion = params["criterion"]
         else:
             criterion = torch.nn.MSELoss().cuda()
     if optimizer is None:
-        if params["optimizer"]:
+        if "optimizer" in params:
             optimizer = params["optimizer"]
         else:
             optimizer = Adam(model.parameters(), lr=params["learning rate"], amsgrad=True)
     if lr_scheduler is None:
-        if params["lr_gamma"]:
+        if "lr_gamma" in params:
             lr_gamma = params["lr_gamma"]
-        if params["lr_scheduler"]:
+        if "lr_scheduler" in params:
             lr_scheduler = params["lr_scheduler"]
         else:
             lr_scheduler = ExponentialLR(optimizer, gamma=lr_gamma)
