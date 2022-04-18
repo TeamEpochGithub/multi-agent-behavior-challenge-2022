@@ -24,17 +24,23 @@ def grid_search(
     model_class.
 
     Options for optimizers, criterions, and lr schedulers should be included in train_params
-    :param model_class:
-    :param model_params:
-    :param train_params:
-    :param dataset:
-    :param val_dataset:
-    :param neptune_project:
-    :param neptune_token:
-    :param validation_metric:
-    :param model_args_as_str: (with a trailing comma)
+    :param model_class: class itself, not its instance
+    :param model_params: dict with model args that have to searched through
+    :param train_params: dict with training parameters that have to searched through
+        only values that are used by `train_model` are supported
+    :param dataset: torch dataset
+    :param val_dataset: dataset used to determine model performance.
+    :param neptune_project: string like TeamEpoch/MABe-Perceiver
+    :param neptune_token: your personal token for neptune
+    :param validation_metric: metric to determine performance (ONLY greater is better).
+        Default - use loss (smaller is better)
+    :param model_args_as_str: a string with parameter values that will NOT be searched through
+        for example: input_axis = 1, fourier_encode_data = True
     :return:
     """
+    if model_args_as_str != "" and model_args_as_str[-2:] != ", " and model_args_as_str[-1] != ",":
+        model_args_as_str += ", "
+
     param_options = ParameterGrid(model_params)
 
     for (key, value) in train_params.items():
@@ -46,15 +52,18 @@ def grid_search(
     print("Performing grid search in:", train_param_options.param_grid)
     print("And", param_options.param_grid)
 
+    # iterate over all possible combinations
     for tr_params in train_param_options:
         for params in param_options:
+            print("Training with", tr_params, params)
+            # make a string with keyword arguments
             model_kwargs = ""
-
             for (key, value) in params.items():
                 model_kwargs += f"{key} = {value}, "
             model_kwargs = model_kwargs[:-2]  # remove last comma and space
 
-            model = nn.Module()  # will actually be set inside exec
+            # will actually be set inside exec
+            model = nn.Module()
             # In order to handle arbitrary argument names in constructor, the model class is
             # initialized through exec function and the parameters are given as a string
             exec(f"model = model_class({model_args_as_str}{model_kwargs})")
@@ -63,7 +72,7 @@ def grid_search(
                 project=neptune_project,
                 api_token=neptune_token,
             )
-            train_model(
+            score = train_model(
                 model,
                 dataset,
                 neptune_run,
@@ -72,3 +81,4 @@ def grid_search(
                 validation_metric=validation_metric,
             )
             neptune_run.stop()
+            print("Best score:", score)

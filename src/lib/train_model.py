@@ -28,6 +28,7 @@ def train_model(
     :param dataset: torch dataset
     :param params: dict including values: batch size, epochs, learning rate
         And optionally: criterion, optimizer, lr_scheduler, lr_gamma
+            (these will not override provided args)
     :param validation_set: dataset used to determine model performance. No set is used by default
         When provided, saves 2 model checkpoints in the current folder: last and best
     :param validation_metric: metric to determine performance (ONLY greater is better).
