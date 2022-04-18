@@ -157,6 +157,22 @@ def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint.pth.t
         shutil.copyfile(filename, "model_best.pth.tar")
 
 
+def load_checkpoint(model, optimizer, path):
+    """
+    restores model state from checkpoint
+    :param model: initialized model of the same class as the saved one
+    :param optimizer: initialized optimizer
+    :param path: to file
+    :return: model, optimizer, loss, epoch
+    """
+    checkpoint = torch.load(path)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    epoch = checkpoint["epoch"]
+    loss = checkpoint["loss"]
+    return model, optimizer, loss, epoch
+
+
 def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) -> (int, bool):
     if validation_metric is not None:
         if best_score is None:
