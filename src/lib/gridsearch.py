@@ -57,7 +57,7 @@ def grid_search(
         full_dict = dict()
         full_dict.update(model_params)
         full_dict.update(train_params)
-        run_tag = hash_dict(full_dict) % 1e6
+        run_tag = hash_dict(full_dict) % 1000000
 
     print("Performing grid search in:", train_param_options.param_grid)
     print("And", param_options.param_grid)
