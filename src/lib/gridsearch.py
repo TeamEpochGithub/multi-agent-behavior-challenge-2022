@@ -6,6 +6,7 @@ from torch import nn
 from torch.utils.data import Dataset
 
 from lib.train_model import train_model
+from lib.util.hash_dict import hash_dict
 
 
 def grid_search(
@@ -18,12 +19,13 @@ def grid_search(
     neptune_token: str,
     validation_metric=None,
     model_args_as_str="",
+    run_tag=None,
 ):
     """
     Performs grid search for the sets of given parameters (model_params and train_params) and
     model_class.
 
-    Options for optimizers, criterions, and lr schedulers should be included in train_params
+    Options for optimizers, criteria, and lr schedulers should be included in train_params
     :param model_class: class itself, not its instance
     :param model_params: dict with model args that have to searched through
     :param train_params: dict with training parameters that have to searched through
@@ -36,6 +38,8 @@ def grid_search(
         Default - use loss (smaller is better)
     :param model_args_as_str: a string with parameter values that will NOT be searched through
         for example: input_axis = 1, fourier_encode_data = True
+    :param run_tag: tag that will be used for labeling all neptune runs
+        Default - hash of parameter dictionaries
     :return:
     """
     if model_args_as_str != "" and model_args_as_str[-2:] != ", " and model_args_as_str[-1] != ",":
@@ -48,6 +52,12 @@ def grid_search(
             train_params[key] = [value]
             print("A train parameter is converted to a list")
     train_param_options = ParameterGrid(train_params)
+
+    if run_tag is None:
+        full_dict = dict()
+        full_dict.update(model_params)
+        full_dict.update(train_params)
+        run_tag = hash_dict(full_dict) % 1e6
 
     print("Performing grid search in:", train_param_options.param_grid)
     print("And", param_options.param_grid)
@@ -66,13 +76,16 @@ def grid_search(
             # initialized through exec function and the parameters are given as a string
             exec_locals = locals()
             exec(f"model = model_class({model_args_as_str}{model_kwargs})", globals(), exec_locals)
-            # after the exec sets model, we need to get it into the current scope
+            # after the exec sets the model variable, we need to get it into the current scope
             model: nn.Module = exec_locals["model"]
 
             neptune_run = neptune.init(
                 project=neptune_project,
                 api_token=neptune_token,
             )
+            neptune_run["sys/tags"].add(f"GS {run_tag}")
+            neptune_run["gs tr params"] = tr_params
+            neptune_run["gs model params"] = params
             score = train_model(
                 model,
                 dataset,
