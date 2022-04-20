@@ -126,6 +126,7 @@ class Attention(nn.Module):
 
 def cache_fn(f):
     cache = dict()
+
     # wrap a function
     @wraps(f)
     def cached_fn(*args, _cache=True, key=None, **kwargs):
@@ -190,7 +191,8 @@ class Perceiver(nn.Module):
               the input_axis given. defaults to True, but can be turned off
               if you are fourier encoding the data yourself.
           self_per_cross_attn: Number of self attention blocks per cross attn.
-          final_classifier_head: mean pool and project embeddings to number of classes (num_classes) at the end
+          final_classifier_head: mean pool and project embeddings to number of classes
+              (num_classes) at the end
         """
         super().__init__()
         self.input_axis = input_axis
