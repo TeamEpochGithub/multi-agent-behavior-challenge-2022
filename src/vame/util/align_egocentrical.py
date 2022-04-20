@@ -385,19 +385,22 @@ def egocentric_alignment(
         filename, disable=not True, desc="Align frames in file", total=len(filename)
     ):
         # print("Aligning data %s, Pose confidence value: %.2f" % (file, confidence))
-        egocentric_time_series, frames = alignment(
-            path_to_file,
-            file,
-            pose_ref_index,
-            video_format,
-            crop_size,
-            confidence,
-            use_video=use_video,
-            check_video=check_video,
-        )
         save_dir = os.path.join(path_to_file, "data", file)
-        os.makedirs(save_dir)
-        np.save(os.path.join(save_dir, file + "-PE-seq.npy"), egocentric_time_series)
+        if os.path.isdir(save_dir):
+            print(f"Skipping {file}")
+        else:
+            egocentric_time_series, frames = alignment(
+                path_to_file,
+                file,
+                pose_ref_index,
+                video_format,
+                crop_size,
+                confidence,
+                use_video=use_video,
+                check_video=check_video,
+            )
+            os.makedirs(save_dir)
+            np.save(os.path.join(save_dir, file + "-PE-seq.npy"), egocentric_time_series)
     #        np.save(os.path.join(path_to_file,'data/',file,"",file+'-PE-seq.npy',
     #        egocentric_time_series))
 
