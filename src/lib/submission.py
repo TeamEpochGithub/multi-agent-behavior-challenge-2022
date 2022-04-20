@@ -36,6 +36,9 @@ def submission_embeddings(
     (however should be validated with the validate function before using it)
     """
 
+    if config["eval_mode"]:
+        model.eval()
+
     embeddings_model_size = config["model_embd_size"]
     features_size = config["feature_size"]
     sub_clips_items = sub_clips["sequences"].items()
@@ -48,6 +51,64 @@ def submission_embeddings(
 
     frame_number_map = {}
     start = 0
+
+    if config["use_batch"] == True:
+        if config["batch_size"] == None:
+            raise ValueError("The batch size is not specified. However the use_batch flag is set to true.")
+
+        for sequence_key in tqdm(sub_clips["sequences"]):
+            keypoints = sub_clips["sequences"][sequence_key]["keypoints"]
+            embeddings = np.empty((len(keypoints), embeddings_size), dtype=np.float32)
+
+            start_batch = 0
+            for i in range(start_batch + config["batch_size"], len(keypoints), config["batch_size"]):
+                X = torch.empty((3, 12, 2), dtype=torch.float32)
+                for j in range(start_batch, start_batch + config["batch_size"]):
+                    X = torch.cat((X, keypoints[i]), 0)
+
+                X = X.cuda()
+                embs = model(X, return_embeddings=config["return_embeddings"])
+                embs = embs.detach().cpu().numpy()
+                embeddings[start_batch:start_batch+config["batch_size"], :embeddings_model_size] = embs
+                start_batch += config["batch_size"]
+
+            seq_index = find_seq(sequence_key, sub_seq)
+            # in the notebook you have full energies here, needs to be passed in embd
+            #also reshaping needs to be done before and passed directly in embd
+            last = embeddings_model_size
+            #precomputed features
+            for e in embd:
+                if e[seq_index].shape != (3,):
+                    reshaped_e = e[seq_index].reshape(1800, -1)
+                    embeddings[:, last : last + reshaped_e.shape[1]] = reshaped_e
+                    last += reshaped_e.shape[1]
+                else:
+                    embeddings[:, last : last + 3] = e[seq_index]
+                    last += 3
+
+            # single frame features
+            if config["use_single_frame"]:
+                if func is None:
+                    raise ValueError("You have not passed any functions in func.")
+
+                for i in range(len(keypoints)):
+                    lastx = last
+                    for f in func:
+                        temp = f(keypoints[i].flatten())
+                        embeddings[i, lastx : lastx + temp.shape[0]] = temp
+                        lastx = lastx + temp.shape[0]
+
+            end = start + len(keypoints)
+            embeddings_array[start:end] = embeddings
+            frame_number_map[sequence_key] = (start, end)
+            start = end
+            assert end == num_total_frames
+            submission_dict = {"frame_number_map": frame_number_map, "embeddings": embeddings_array}
+
+            if not validate_submission(submission_dict, sub_clips):
+                raise Exception("Your submission dictionary did not pass the validation script")
+
+            return submission_dict
 
     for sequence_key, sequence in tqdm(zip(sub_clips["sequences"], sub_seq)):
 
