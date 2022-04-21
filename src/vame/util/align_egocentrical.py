@@ -387,7 +387,8 @@ def egocentric_alignment(
         # print("Aligning data %s, Pose confidence value: %.2f" % (file, confidence))
         save_dir = os.path.join(path_to_file, "data", file)
         if os.path.isdir(save_dir):
-            print(f"Skipping {file}", end="\r")
+            # print(f"Skipping {file}", end="\r")
+            pass
         else:
             egocentric_time_series, frames = alignment(
                 path_to_file,
