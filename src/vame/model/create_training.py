@@ -167,7 +167,7 @@ def traindata_legacy(cfg, files, testfraction, num_features, savgol_filter):
     print("Length of test data: %d" % len(z_test.T))
 
 
-def create_trainset(config):
+def create_trainset(config, is_robust=True):
     config_file = Path(config).resolve()
     cfg = read_config(config_file)
     legacy = cfg["legacy"]
@@ -192,7 +192,9 @@ def create_trainset(config):
         print("Using robust setting to eliminate outliers! IQR factor: %d" % cfg["iqr_factor"])
 
     if legacy is False:
-        traindata(cfg, files, cfg["test_fraction"], cfg["num_features"], cfg["savgol_filter"])
+        traindata(
+            cfg, files, cfg["test_fraction"], cfg["num_features"], cfg["savgol_filter"], is_robust
+        )
     else:
         traindata_legacy(
             cfg, files, cfg["test_fraction"], cfg["num_features"], cfg["savgol_filter"]
