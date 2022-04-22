@@ -34,7 +34,7 @@ def interpol(arr):
     return arr
 
 
-def traindata(cfg, files, testfraction, num_features, savgol_filter):
+def traindata(cfg, files, testfraction, num_features, savgol_filter, is_robust=True):
 
     X_train = []
     pos = []
@@ -49,7 +49,7 @@ def traindata(cfg, files, testfraction, num_features, savgol_filter):
         X_std = np.std(data, axis=None)
         X_z = (data.T - X_mean) / X_std
 
-        if cfg["robust"] is True:
+        if cfg["robust"] and is_robust:
             iqr_val = iqr(X_z)
             print("IQR value: %.2f, IQR cutoff: %.2f" % (iqr_val, cfg["iqr_factor"] * iqr_val))
             for i in range(X_z.shape[0]):
