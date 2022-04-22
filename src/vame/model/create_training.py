@@ -47,6 +47,8 @@ def traindata(cfg, files, testfraction, num_features, savgol_filter, is_robust=T
         data = interpol(data)
         X_mean = np.mean(data, axis=None)
         X_std = np.std(data, axis=None)
+        if X_std == 0:
+            X_std = 0.00001
         X_z = (data.T - X_mean) / X_std
 
         if cfg["robust"] and is_robust:
