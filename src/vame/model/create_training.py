@@ -29,7 +29,10 @@ def nan_helper(y):
 def interpol(arr):
     y = np.transpose(arr)
     nans, x = nan_helper(y)
-    y[nans] = np.interp(x(nans), x(~nans), y[~nans])
+    try:
+        y[nans] = np.interp(x(nans), x(~nans), y[~nans])
+    except ValueError:
+        y[nans] = 75
     arr = np.transpose(y)
     return arr
 
@@ -62,10 +65,7 @@ def traindata(cfg, files, testfraction, num_features, savgol_filter, is_robust=T
                     elif X_z[i, marker] < -cfg["iqr_factor"] * iqr_val:
                         X_z[i, marker] = np.nan
 
-                try:
-                    X_z[i, :] = interpol(X_z[i, :])
-                except ValueError:
-                    print(X_z[i, :])
+                X_z[i, :] = interpol(X_z[i, :])
 
         X_len = len(data.T)
         pos_temp += X_len
