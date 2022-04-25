@@ -64,7 +64,7 @@ def traindata(cfg, files, testfraction, num_features, savgol_filter, is_robust=T
 
                 try:
                     X_z[i, :] = interpol(X_z[i, :])
-                except:
+                except ValueError:
                     print(X_z[i, :])
 
         X_len = len(data.T)
