@@ -20,7 +20,6 @@ def train_model(
     optimizer: Optimizer = None,
     lr_scheduler=None,
     lr_gamma=0.9,
-    finish_neptune=False,
 ):
     """
     Trains a PyTorch model and logs it to neptune (https://neptune.ai/)
@@ -28,6 +27,8 @@ def train_model(
     :param neptune_run: instance of a started neptune run
     :param dataset: torch dataset
     :param params: dict including values: batch size, epochs, learning rate
+        And optionally: criterion, optimizer, lr_scheduler, lr_gamma
+            (these will not override provided args)
     :param validation_set: dataset used to determine model performance. No set is used by default
         When provided, saves 2 model checkpoints in the current folder: last and best
     :param validation_metric: metric to determine performance (ONLY greater is better).
@@ -38,7 +39,6 @@ def train_model(
     :param lr_scheduler: class to change lr between epochs. Defaults to Exponential with lr_gamma
         When providing a scheduler (instance), also provide the optimizer it is configured for
     :param lr_gamma: gamma parameter for default ExponentialLR scheduler
-    :param finish_neptune: whether to stop neptune run
     :return: None
     """
     model.cuda()
@@ -47,13 +47,10 @@ def train_model(
     losses = AverageMeter()
     best_score = None
 
-    # model essentials
-    if criterion is None:
-        criterion = torch.nn.MSELoss().cuda()
-    if optimizer is None:
-        optimizer = Adam(model.parameters(), lr=params["learning rate"], amsgrad=True)
-    if lr_scheduler is None:
-        lr_scheduler = ExponentialLR(optimizer, gamma=lr_gamma)
+    # set model essentials according to provided parameters
+    criterion, optimizer, lr_scheduler = _init_model_essentials(
+        model, params, criterion, optimizer, lr_scheduler, lr_gamma
+    )
 
     # data transformations
     dataloader = DataLoader(dataset, batch_size=params["batch size"], shuffle=True)
@@ -110,9 +107,7 @@ def train_model(
                 },
                 is_best,
             )
-
-    if finish_neptune:
-        neptune_run.stop()
+    return best_score
 
 
 def validate(model: nn.Module, val_dataloader: DataLoader, criterion, metric=None):
@@ -155,6 +150,43 @@ def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint.pth.t
     torch.save(state, filename)
     if is_best:
         shutil.copyfile(filename, "model_best.pth.tar")
+
+
+def load_checkpoint(model, optimizer, path):
+    """
+    restores model state from checkpoint
+    :param model: initialized model of the same class as the saved one
+    :param optimizer: initialized optimizer
+    :param path: to file
+    :return: model, optimizer, loss, epoch
+    """
+    checkpoint = torch.load(path)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    epoch = checkpoint["epoch"]
+    loss = checkpoint["loss"]
+    return model, optimizer, loss, epoch
+
+
+def _init_model_essentials(model, params, criterion, optimizer, lr_scheduler, lr_gamma):
+    if criterion is None:
+        if "criterion" in params:
+            criterion = params["criterion"]
+        else:
+            criterion = torch.nn.MSELoss().cuda()
+    if optimizer is None:
+        if "optimizer" in params:
+            optimizer = params["optimizer"]
+        else:
+            optimizer = Adam(model.parameters(), lr=params["learning rate"], amsgrad=True)
+    if lr_scheduler is None:
+        if "lr_gamma" in params:
+            lr_gamma = params["lr_gamma"]
+        if "lr_scheduler" in params:
+            lr_scheduler = params["lr_scheduler"]
+        else:
+            lr_scheduler = ExponentialLR(optimizer, gamma=lr_gamma)
+    return criterion, optimizer, lr_scheduler
 
 
 def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) -> (int, bool):
