@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import scipy.signal
+import tqdm
 from scipy.stats import iqr
 
 from vame.util.auxiliary import read_config
@@ -31,7 +32,7 @@ def interpol(arr):
     nans, x = nan_helper(y)
     try:
         y[nans] = np.interp(x(nans), x(~nans), y[~nans])
-    except ValueError:
+    except:
         y[nans] = 75
     arr = np.transpose(y)
     return arr
@@ -43,8 +44,8 @@ def traindata(cfg, files, testfraction, num_features, savgol_filter, is_robust=T
     pos = []
     pos_temp = 0
     pos.append(0)
-    for file in files:
-        print("z-scoring of file %s" % file)
+    for file in tqdm.tqdm(files, desc="Making train test split", total=len(files)):
+        # print("z-scoring of file %s" % file)
         path_to_file = os.path.join(cfg["project_path"], "data", file, file + "-PE-seq.npy")
         data = np.load(path_to_file)
         data = interpol(data)
@@ -56,7 +57,7 @@ def traindata(cfg, files, testfraction, num_features, savgol_filter, is_robust=T
 
         if cfg["robust"] and is_robust:
             iqr_val = iqr(X_z)
-            print("IQR value: %.2f, IQR cutoff: %.2f" % (iqr_val, cfg["iqr_factor"] * iqr_val))
+            # print("IQR value: %.2f, IQR cutoff: %.2f" % (iqr_val, cfg["iqr_factor"] * iqr_val))
             for i in range(X_z.shape[0]):
                 for marker in range(X_z.shape[1]):
                     if X_z[i, marker] > cfg["iqr_factor"] * iqr_val:
