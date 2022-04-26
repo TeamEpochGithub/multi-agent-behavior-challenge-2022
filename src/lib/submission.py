@@ -51,7 +51,7 @@ def submission_embeddings(
 
     frame_number_map = {}
     start = 0
-
+    """
     if config["use_batch"] == True:
         if config["batch_size"] == None:
             raise ValueError("The batch size is not specified. However the use_batch flag is set to true.")
@@ -113,6 +113,7 @@ def submission_embeddings(
 
             return submission_dict
 
+    """
     for sequence_key, sequence in tqdm(zip(sub_clips["sequences"], sub_seq)):
 
         frames_seq, _ = dataset_from_frames(
@@ -132,7 +133,6 @@ def submission_embeddings(
         # also reshaping needs to be done before and passed directly in embd
         last = embeddings_model_size
         # precomputed features
-        #TODO: duplicate code
         for e in embd:
             if e[seq_index].shape != (3,):
                 reshaped_e = e[seq_index].reshape(1800, -1)
