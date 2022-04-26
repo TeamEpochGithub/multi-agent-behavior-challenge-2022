@@ -63,12 +63,14 @@ def submission_embeddings(
             start_batch = 0
             for i in range(start_batch + config["batch_size"], len(keypoints), config["batch_size"]):
                 X = torch.empty((3, 12, 2), dtype=torch.float32)
+                #TODO: error here
                 for j in range(start_batch, start_batch + config["batch_size"]):
-                    X = torch.cat((X, keypoints[i]), 0)
+                    X = torch.cat((X, torch.tensor(keypoints[j], dtype=torch.float32)), 0)
 
                 X = X.cuda()
                 embs = model(X, return_embeddings=config["return_embeddings"])
                 embs = embs.detach().cpu().numpy()
+                # TODO: error here
                 embeddings[start_batch:start_batch+config["batch_size"], :embeddings_model_size] = embs
                 start_batch += config["batch_size"]
 
@@ -77,6 +79,7 @@ def submission_embeddings(
             #also reshaping needs to be done before and passed directly in embd
             last = embeddings_model_size
             #precomputed features
+            #TODO: duplicate code (function)
             for e in embd:
                 if e[seq_index].shape != (3,):
                     reshaped_e = e[seq_index].reshape(1800, -1)
@@ -129,6 +132,7 @@ def submission_embeddings(
         # also reshaping needs to be done before and passed directly in embd
         last = embeddings_model_size
         # precomputed features
+        #TODO: duplicate code
         for e in embd:
             if e[seq_index].shape != (3,):
                 reshaped_e = e[seq_index].reshape(1800, -1)
@@ -149,6 +153,7 @@ def submission_embeddings(
                     temp = f(keypoints[i].flatten())
                     embeddings[i, lastx : lastx + temp.shape[0]] = temp
                     lastx = lastx + temp.shape[0]
+
 
         end = start + len(keypoints)
         embeddings_array[start:end] = embeddings
