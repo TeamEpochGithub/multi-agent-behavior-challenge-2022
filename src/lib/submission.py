@@ -103,6 +103,76 @@ def submission_embeddings(
     return submission_dict
 
 
+def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loader, sub_clips:dict, sub_seq:list, 
+        func=None, embd: list = None) -> dict:
+
+    """
+    """
+
+    submission = np.empty((config["sample_shape"], config["embeddings_size"]), dtype=np.float32)
+    idx=0
+
+    for data in tqdm(prediction_loader, total=len(prediction_loader)):
+        with torch.no_grad():
+            images = data['image'].to(device)
+            output = model.projector(model.encoder(images))
+            output = output.cpu().numpy()
+            submission[idx:idx+len(output), :config["model_embds_size"]] = output
+            idx += len(output)
+
+	if config["only_model_embeddings"] == True:
+		assert end == num_total_frames
+    	submission_dict = {"frame_number_map": frame_number_map, "embeddings": embeddings_array}
+
+    	if not validate_submission(submission_dict, sub_clips):
+        	raise Exception("Your submission dictionary did not pass the validation script")
+
+    	return submission_dict
+
+    for sequence_key in tqdm(sub_clips['sequences']):
+        seq_index = find_seq(sequence_key, sub_seq) 
+        # in the notebook you have full energies here, needs to be passed in embd
+        # also reshaping needs to be done before and passed directly in embd
+        last = config["model_embds_size"]
+        # precomputed features
+        for e in embd:
+            if e[seq_index].shape != (3,):
+                reshaped_e = e[seq_index].reshape(1800, -1)
+                submission[:, last : last + reshaped_e.shape[1]] = reshaped_e
+                last += reshaped_e.shape[1]
+            else:
+                submission[:, last : last + 3] = e[seq_index]
+                last += 3
+
+        # single frame features
+        if config["use_single_frame"]:
+            if func is None:
+                raise ValueError("You have not passed any functions in func.")
+
+            for i in range(len(keypoints)):
+                lastx = last
+                for f in func:
+                    temp = f(keypoints[i].flatten())
+                    submission[i, lastx : lastx + temp.shape[0]] = temp
+                    lastx = lastx + temp.shape[0]
+
+        end = start + len(keypoints)
+        embeddings_array[start:end] = submission
+        frame_number_map[sequence_key] = (start, end)
+        start = end
+
+    assert end == num_total_frames
+    submission_dict = {"frame_number_map": frame_number_map, "embeddings": embeddings_array}
+
+    if not validate_submission(submission_dict, sub_clips):
+        raise Exception("Your submission dictionary did not pass the validation script")
+
+    return submission_dict
+        
+
+    
+
+
 def validate_submission(submission, submission_clips):
     """
     Checks that the submission dict has all the specific reqs for a submission.

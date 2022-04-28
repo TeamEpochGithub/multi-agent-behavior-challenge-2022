@@ -290,3 +290,67 @@ def convert_seqs_to_vame(sequences: [Sequence]) -> pd.DataFrame:
 
     v_d_cols = pd.MultiIndex.from_tuples(itertools.product(top, mouse_kpt_names, x_y_l))
     return pd.DataFrame(data=vame_data, columns=v_d_cols)
+
+
+def load_optimizer(optimizer, epochs, weight_decay, batch_size, model):
+
+    scheduler = None
+    if optimizer == "Adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)  # TODO: LARS
+    elif optimizer == "LARS":
+        # optimized using LARS with linear learning rate scaling
+        # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 10−6.
+        learning_rate = 0.3 * batch_size / 256
+        optimizer = LARS(
+            model.parameters(),
+            lr=learning_rate,
+            weight_decay=weight_decay,
+            exclude_from_weight_decay=["batch_normalization", "bias"],
+        )
+
+        # "decay the learning rate with the cosine decay schedule without restarts"
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, epochs, eta_min=0, last_epoch=-1
+        )
+    else:
+        raise NotImplementedError
+
+    return optimizer, scheduler
+
+def save_model(epoch, model_path, model, optimizer):
+    out = os.path.join(model_path, "checkpoint_{}.tar".format(epoch))
+
+    # To save a DataParallel model generically, save the model.module.state_dict().
+    # This way, you have the flexibility to load the model any way you want to any device you want.
+    if isinstance(model, torch.nn.DataParallel):
+        torch.save(model.module.state_dict(), out)
+    else:
+        torch.save(model.state_dict(), out)
+
+
+def bounding_box_keypoints(datafolder: str,filename: str, padbbox=50: int, crop_size=512: int,save: bool=False):
+    """
+    """
+
+    keypoints = np.load(os.path.join(datafolder, filename), allow_pickle=True).item()
+
+    for sk in tqdm(keypoints['sequences'].keys()):
+        kp=keypoints['sequences'][sk]['keypoints']
+        bboxes = []
+        for frame_idx in range(len(kp)):
+            allcoords = np.int32(kp[frame_idx].reshape(-1, 2))
+            minvals = max(np.min(allcoords[:, 0]) - padbbox, 0), max(np.min(allcoords[:, 1]) - padbbox, 0)
+            maxvals = min(np.max(allcoords[:, 0]) + padbbox, crop_size), 
+                        min(np.max(allcoords[:, 1]) + padbbox, crop_size)
+
+            bbox = np.array((*minvals, *maxvals))
+            bbox = np.int32(bbox*224/512)
+            bboxes.append(bbox)
+
+        keypoints['sequences'][sk]['bbox'] = np.array(bboxes)
+
+
+    if save == True:
+        np.save(os.path.join(datafolder, 'submission_keypoints_bbox.npy'), keypoints)
+
+    return keypoints

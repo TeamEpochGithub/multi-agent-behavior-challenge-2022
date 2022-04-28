@@ -202,3 +202,56 @@ def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) 
         is_best = val_loss < best_score
         best_score = min(val_loss, best_score)
     return best_score, is_best
+
+def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer):
+	"""
+	"""
+    loss_epoch = 0
+    
+    # tqdm_iter = tqdm(train_loader, total=len(train_loader)) 
+	# Total train loader is huge, he're we limiting to steps per epoch
+    tqdm_iter = tqdm(train_loader, total=steps_per_epoch)
+
+    tqdm_iter.set_description(f"Epoch {epoch}")
+    for step, batch in enumerate(tqdm_iter):
+        optimizer.zero_grad()
+        x_i = batch['image'][0].cuda(non_blocking=True)
+        x_j = batch['image'][1].cuda(non_blocking=True)
+
+        # positive pair, with encoding
+        h_i, h_j, z_i, z_j = model(x_i, x_j)
+
+
+        loss = criterion(z_i, z_j)
+        loss.backward()
+
+        optimizer.step()
+
+        tqdm_iter.set_postfix(iter_loss=loss.item())
+
+        loss_epoch += loss.item()
+        if step >= steps_per_epoch:
+            break
+
+    return loss_epoch
+
+
+def train(model, dict:config):
+    """
+    """
+
+    for epoch in range(epochs):
+        lr = optimizer.param_groups[0]['lr']
+        loss_epoch = train(epoch, train_loader, model, criterion, optimizer)
+        print(f"Loss on epoch {epoch}: {loss_epoch}")
+
+        if scheduler:
+            scheduler.step()
+
+        save_checkpoint(config, True)
+
+    save_checkpoint(config, True)
+
+
+
+
