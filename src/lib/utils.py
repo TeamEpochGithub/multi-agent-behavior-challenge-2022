@@ -1,11 +1,11 @@
 import copy
 import itertools
-
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import animation, rc
-
+from tqdm import tqdm
 from lib.sequence import Sequence
 
 # matplotlib.use("TkAgg")
@@ -328,7 +328,7 @@ def save_model(epoch, model_path, model, optimizer):
         torch.save(model.state_dict(), out)
 
 
-def bounding_box_keypoints(datafolder: str,filename: str, padbbox=50: int, crop_size=512: int,save: bool=False):
+def bounding_box_keypoints(datafolder: str,filename: str, padbbox: int=50, crop_size: int=512,save: bool=False):
     """
     """
 
@@ -341,7 +341,7 @@ def bounding_box_keypoints(datafolder: str,filename: str, padbbox=50: int, crop_
             allcoords = np.int32(kp[frame_idx].reshape(-1, 2))
             minvals = max(np.min(allcoords[:, 0]) - padbbox, 0), max(np.min(allcoords[:, 1]) - padbbox, 0)
             maxvals = min(np.max(allcoords[:, 0]) + padbbox, crop_size), 
-                        min(np.max(allcoords[:, 1]) + padbbox, crop_size)
+            min(np.max(allcoords[:, 1]) + padbbox, crop_size)
 
             bbox = np.array((*minvals, *maxvals))
             bbox = np.int32(bbox*224/512)

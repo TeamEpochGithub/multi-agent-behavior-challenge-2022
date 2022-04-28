@@ -1,4 +1,6 @@
 from torch.utils.data import Dataset
+import numpy as np
+import cv2
 
 
 class MiceDataset(Dataset):
@@ -13,7 +15,7 @@ class MiceDataset(Dataset):
         return self.x[idx], self.y[idx]
 
 
-class MouseVideoDataset(torch.utils.data.Dataset):
+class MouseVideoDataset(Dataset):
     """
     Reads frames from video files.
     Copied from the baseline notebook of the second round.
