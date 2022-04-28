@@ -154,7 +154,6 @@ def submission_embeddings(
                     embeddings[i, lastx : lastx + temp.shape[0]] = temp
                     lastx = lastx + temp.shape[0]
 
-
         end = start + len(keypoints)
         embeddings_array[start:end] = embeddings
         frame_number_map[sequence_key] = (start, end)
