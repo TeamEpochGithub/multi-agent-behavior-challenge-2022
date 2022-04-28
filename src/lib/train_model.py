@@ -1,5 +1,7 @@
 import shutil
 
+
+from tqdm import tqdm
 import torch
 from torch import nn
 from torch.optim import Adam, Optimizer
