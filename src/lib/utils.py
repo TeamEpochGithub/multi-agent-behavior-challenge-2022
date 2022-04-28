@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import animation, rc
 from tqdm import tqdm
+import torch
 from lib.sequence import Sequence
 
 # matplotlib.use("TkAgg")
