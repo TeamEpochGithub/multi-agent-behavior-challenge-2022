@@ -161,11 +161,11 @@ def load_checkpoint(model, optimizer, path):
     :return: model, optimizer, loss, epoch
     """
     checkpoint = torch.load(path)
-    model.load_state_dict(checkpoint["model_state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    model.load_state_dict(checkpoint["state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer"])
     epoch = checkpoint["epoch"]
-    loss = checkpoint["loss"]
-    return model, optimizer, loss, epoch
+    score = checkpoint["best_score"]
+    return model, optimizer, score, epoch
 
 
 def _init_model_essentials(model, params, criterion, optimizer, lr_scheduler, lr_gamma):
