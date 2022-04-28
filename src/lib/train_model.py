@@ -204,10 +204,9 @@ def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) 
     return best_score, is_best
 
 def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer):
-	"""
-	"""
-    loss_epoch = 0
     
+
+    loss_epoch = 0
     # tqdm_iter = tqdm(train_loader, total=len(train_loader)) 
 	# Total train loader is huge, he're we limiting to steps per epoch
     tqdm_iter = tqdm(train_loader, total=steps_per_epoch)
@@ -236,11 +235,9 @@ def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer
     return loss_epoch
 
 
-def train(model, dict:config):
-    """
-    """
+def train(model, config: dict, optimizer, scheduler, criterion, train_loader):
 
-    for epoch in range(epochs):
+    for epoch in range(config["epochs"]):
         lr = optimizer.param_groups[0]['lr']
         loss_epoch = train(epoch, train_loader, model, criterion, optimizer)
         print(f"Loss on epoch {epoch}: {loss_epoch}")
