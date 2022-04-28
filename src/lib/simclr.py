@@ -1,3 +1,9 @@
+import numpy as np
+import torch
+import torchvision
+from simclr import SimCLR
+import torchvision.transforms as T
+
 class TransformsSimCLR:
     def __init__(self, size, pretrained=True, n_channel=3, validation=False) -> None:
         self.train_transforms = T.Compose([
@@ -33,9 +39,9 @@ class TransformsSimCLR:
             return self.validation_transforms(x)
 
 
-def get_simclr_model(IS_PRETRAINED: bool, n_channel: int, embedding_size: int):
-	"""
-	"""
+def get_simclr_model(IS_PRETRAINED: bool, n_channel: int, embedding_size: int, device: str):
+    """
+    """
     resnet_encoder = torchvision.models.resnet50(pretrained=IS_PRETRAINED)
 
     ## Experimental setup for multiplying the grayscale channel
