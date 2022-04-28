@@ -123,7 +123,11 @@ def train(
     loss = 0.0
     seq_len_half = int(seq_len / 2)
 
+    print("Train loader data len: ", len(train_loader))
     for idx, data_item in enumerate(train_loader):
+        if idx % 200 != 0:
+            continue
+
         data_item = Variable(data_item)
         data_item = data_item.permute(0, 2, 1)
 
