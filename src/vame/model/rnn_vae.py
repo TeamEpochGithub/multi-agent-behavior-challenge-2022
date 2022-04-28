@@ -127,8 +127,8 @@ def train(
 
     print("Train loader data len: ", len(train_loader))
     for idx, data_item in enumerate(tqdm(train_loader, total=len(train_loader))):
-        if idx % 200 != 0:
-            continue
+        # if idx % 200 != 0:
+        #     continue
 
         data_item = Variable(data_item)
         data_item = data_item.permute(0, 2, 1)
@@ -244,11 +244,13 @@ def test(
     loss = 0.0
     seq_len_half = int(seq_len / 2)
 
+    from tqdm import tqdm
+
     print("Test loader data len: ", len(test_loader))
     with torch.no_grad():
-        for idx, data_item in enumerate(test_loader):
-            if idx % 200 != 0:
-                continue
+        for idx, data_item in enumerate(tqdm(test_loader, total=len(test_loader))):
+            # if idx % 200 != 0:
+            #     continue
             # we're only going to infer, so no autograd at all required
             data_item = Variable(data_item)
             data_item = data_item.permute(0, 2, 1)

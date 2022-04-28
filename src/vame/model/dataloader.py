@@ -41,7 +41,7 @@ class SEQUENCE_DATASET(Dataset):
             print("Initialize test data. Datapoints %d" % self.data_points)
 
     def __len__(self):
-        return self.data_points
+        return self.data_points // 200
 
     def __getitem__(self, index):
         temp_window = self.temporal_window
