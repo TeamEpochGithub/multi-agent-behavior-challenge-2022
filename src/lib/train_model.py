@@ -239,7 +239,7 @@ def train(model, config: dict, optimizer, scheduler, criterion, train_loader):
 
     for epoch in range(config["epochs"]):
         lr = optimizer.param_groups[0]['lr']
-        loss_epoch = train(epoch, train_loader, model, criterion, optimizer)
+        loss_epoch = train_epoch(epoch, train_loader, model, criterion, optimizer)
         print(f"Loss on epoch {epoch}: {loss_epoch}")
 
         if scheduler:
