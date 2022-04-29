@@ -341,8 +341,7 @@ def bounding_box_keypoints(datafolder: str,filename: str, padbbox: int=50, crop_
         for frame_idx in range(len(kp)):
             allcoords = np.int32(kp[frame_idx].reshape(-1, 2))
             minvals = max(np.min(allcoords[:, 0]) - padbbox, 0), max(np.min(allcoords[:, 1]) - padbbox, 0)
-            maxvals = min(np.max(allcoords[:, 0]) + padbbox, crop_size), 
-            min(np.max(allcoords[:, 1]) + padbbox, crop_size)
+            maxvals = min(np.max(allcoords[:, 0]) + padbbox, crop_size), min(np.max(allcoords[:, 1]) + padbbox, crop_size)
 
             bbox = (*minvals, *maxvals)
             bbox = np.array(bbox)
