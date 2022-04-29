@@ -36,6 +36,9 @@ def submission_embeddings(
     (however should be validated with the validate function before using it)
     """
 
+    if config["eval_mode"] and config["eval_mode"] == True:
+        model.eval()
+
     embeddings_model_size = config["model_embd_size"]
     features_size = config["feature_size"]
     sub_clips_items = sub_clips["sequences"].items()
