@@ -231,7 +231,7 @@ def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer
         tqdm_iter.set_postfix(iter_loss=loss.item())
 
         loss_epoch += loss.item()
-        if step >= steps_per_epoch:
+        if step >= config["steps_per_epoch"]:
             break
 
     return loss_epoch
