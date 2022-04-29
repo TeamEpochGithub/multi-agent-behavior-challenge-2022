@@ -244,7 +244,7 @@ def train(model, config: dict, optimizer, scheduler, criterion, train_loader, ne
     for epoch in range(config["epochs"]):
         lr = optimizer.param_groups[0]['lr']
         loss_epoch = train_epoch(epoch, train_loader, model, criterion, optimizer, config)
-        neptune_run["train/loss"].log(loss_epoch.avg)
+        neptune_run["train/loss"].log(loss_epoch)
         print(f"Loss on epoch {epoch}: {loss_epoch}")
 
         if scheduler:
