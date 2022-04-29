@@ -344,7 +344,8 @@ def bounding_box_keypoints(datafolder: str,filename: str, padbbox: int=50, crop_
             maxvals = min(np.max(allcoords[:, 0]) + padbbox, crop_size), 
             min(np.max(allcoords[:, 1]) + padbbox, crop_size)
 
-            bbox = np.array((*minvals, *maxvals))
+            bbox = (*minvals, *maxvals)
+            bbox = np.array(bbox)
             bbox = np.int32(bbox*224/512)
             bboxes.append(bbox)
 
