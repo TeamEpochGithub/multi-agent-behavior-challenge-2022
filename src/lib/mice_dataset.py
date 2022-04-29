@@ -74,7 +74,7 @@ class MouseVideoDataset(Dataset):
         frames_array = np.zeros((*self.frame_size, nf), dtype=np.float32)
         
         if not os.path.exists(video_path):
-            # raise FileNotFoundError(video_path)
+            raise FileNotFoundError(video_path)
             if self.transform is not None:
                 frames_array = self.transform(frames_array)
             return { "idx": idx,
