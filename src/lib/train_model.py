@@ -237,19 +237,22 @@ def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer
     return loss_epoch
 
 
-def train(model, config: dict, optimizer, scheduler, criterion, train_loader):
+def train(model, config: dict, optimizer, scheduler, criterion, train_loader, neptune_run):
+
+    neptune_run["parameters"] = config
 
     for epoch in range(config["epochs"]):
         lr = optimizer.param_groups[0]['lr']
         loss_epoch = train_epoch(epoch, train_loader, model, criterion, optimizer, config)
+        neptune_run["train/loss"].log(loss_epoch.avg)
         print(f"Loss on epoch {epoch}: {loss_epoch}")
 
         if scheduler:
             scheduler.step()
 
-        save_checkpoint(config, True)
+        save_checkpoint(model.state_dict(), True)
 
-    save_checkpoint(config, True)
+    save_checkpoint(model.state_dict(), True)
 
 
 
