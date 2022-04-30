@@ -109,9 +109,6 @@ def submission_embeddings(
 def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loader, sub_clips:dict, sub_seq:list, 
         func=None, embd: list = None) -> dict:
 
-    """
-    """
-
     submission = np.empty((config["sample_shape"], config["embeddings_size"]), dtype=np.float32)
     idx=0
 
@@ -124,7 +121,8 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
             idx += len(output)
 
 	if config["only_model_embeddings"] == True:
-		assert end == num_total_frames
+
+        assert end == num_total_frames
     	submission_dict = {"frame_number_map": frame_number_map, "embeddings": embeddings_array}
 
     	if not validate_submission(submission_dict, sub_clips):
