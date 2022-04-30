@@ -109,29 +109,43 @@ def submission_embeddings(
 def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loader, sub_clips:dict, sub_seq:list, 
         func=None, embd: list = None) -> dict:
 
-    submission = np.empty((config["sample_shape"], config["embeddings_size"]), dtype=np.float32)
+
+    embeddings_model_size = config["model_embd_size"]
+    features_size = config["feature_size"]
+    sub_clips_items = sub_clips["sequences"].items()
+    num_total_frames = np.sum([seq["keypoints"].shape[0] for _, seq in sub_clips_items])
+    embeddings_size = embeddings_model_size + features_size
+    submission = np.empty((num_total_frames, embeddings_size), dtype=np.float32)
     idx=0
+
+    if embeddings_size > 128:
+        raise ValueError(f"The maximum number of embeddings is 128, you have {embeddings_size}")
+
+    frame_number_map = {}
+    start = 0
+
 
     for data in tqdm(prediction_loader, total=len(prediction_loader)):
         with torch.no_grad():
-            images = data['image'].to(device)
+            images = data['image'].to(config['device'])
             output = model.projector(model.encoder(images))
             output = output.cpu().numpy()
             submission[idx:idx+len(output), :config["model_embds_size"]] = output
             idx += len(output)
 
-	if config["only_model_embeddings"] == True:
+    if config["only_model_embeddings"] == True:
 
         assert end == num_total_frames
-    	submission_dict = {"frame_number_map": frame_number_map, "embeddings": embeddings_array}
+        submission_dict = {"frame_number_map": frame_number_map, "embeddings": submission}
 
-    	if not validate_submission(submission_dict, sub_clips):
-        	raise Exception("Your submission dictionary did not pass the validation script")
+        if not validate_submission(submission_dict, sub_clips):
+            raise Exception("Your submission dictionary did not pass the validation script")
 
-    	return submission_dict
+        return submission_dict
 
     for sequence_key in tqdm(sub_clips['sequences']):
         seq_index = find_seq(sequence_key, sub_seq) 
+        keypoints = sub_clips["sequences"][sequence_key]["keypoints"]
         # in the notebook you have full energies here, needs to be passed in embd
         # also reshaping needs to be done before and passed directly in embd
         last = config["model_embds_size"]
@@ -158,12 +172,12 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
                     lastx = lastx + temp.shape[0]
 
         end = start + len(keypoints)
-        embeddings_array[start:end] = submission
+        submission[start:end] = submission
         frame_number_map[sequence_key] = (start, end)
         start = end
 
     assert end == num_total_frames
-    submission_dict = {"frame_number_map": frame_number_map, "embeddings": embeddings_array}
+    submission_dict = {"frame_number_map": frame_number_map, "embeddings": submission}
 
     if not validate_submission(submission_dict, sub_clips):
         raise Exception("Your submission dictionary did not pass the validation script")
