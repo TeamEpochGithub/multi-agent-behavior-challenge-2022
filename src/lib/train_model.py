@@ -141,7 +141,7 @@ def validate(model: nn.Module, val_dataloader: DataLoader, criterion, metric=Non
     return losses.avg, metric_scores.avg
 
 
-def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint_resnet_simclr.pth.tar"):
+def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint.pth.tar"):
     """
     saves model to a file
     :param state: state dict
@@ -151,7 +151,7 @@ def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint_resne
     """
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, "model_best_resnet_simclr.pth.tar")
+        shutil.copyfile(filename, "model_best.pth.tar")
 
 
 def load_checkpoint(model, optimizer, path):
@@ -242,7 +242,7 @@ def train(model, config: dict, optimizer, scheduler, criterion, train_loader, ne
     neptune_run["parameters"] = config
 
     for epoch in range(config["epochs"]):
-        lr = optimizer.param_groups[0]['lr']
+        # lr = optimizer.param_groups[0]['lr']
         loss_epoch = train_epoch(epoch, train_loader, model, criterion, optimizer, config)
         neptune_run["train/loss"].log(loss_epoch)
         print(f"Loss on epoch {epoch}: {loss_epoch}")
@@ -250,9 +250,9 @@ def train(model, config: dict, optimizer, scheduler, criterion, train_loader, ne
         if scheduler:
             scheduler.step()
 
-        save_checkpoint(model.state_dict(), True)
+        save_checkpoint(model.state_dict(), True, filename="model_checkpoint_resnet_simclr.pth.tar")
 
-    save_checkpoint(model.state_dict(), True)
+    save_checkpoint(model.state_dict(), True, filename="model_checkpoint_resnet_simclr.pth.tar")
 
 
 
