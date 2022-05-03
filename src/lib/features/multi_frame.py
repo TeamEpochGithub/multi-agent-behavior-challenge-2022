@@ -17,8 +17,8 @@ def calc_velocities(seq: Sequence, verbose=False):
     for i in range(1, 1800):
         for m in range(3):
             velocities[i][m] = (
-                    Sequence.name_mouse(seq.get_mouse(m, i))["neck"]
-                    - Sequence.name_mouse(seq.get_mouse(m, i - 1))["neck"]
+                Sequence.name_mouse(seq.get_mouse(m, i))["neck"]
+                - Sequence.name_mouse(seq.get_mouse(m, i - 1))["neck"]
             )
         if np.any(np.abs(velocities[i]) > 25) and verbose:
             print(f"outlier at {i}: \n{velocities[i]}")
