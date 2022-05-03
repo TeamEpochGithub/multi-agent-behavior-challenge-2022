@@ -241,6 +241,8 @@ def train(model, config: dict, optimizer, scheduler, criterion, train_loader, ne
 
     neptune_run["parameters"] = config
 
+
+    best_train_loss = 1e9 # big number
     for epoch in range(config["epochs"]):
         # lr = optimizer.param_groups[0]['lr']
         loss_epoch = train_epoch(epoch, train_loader, model, criterion, optimizer, config)
@@ -250,9 +252,17 @@ def train(model, config: dict, optimizer, scheduler, criterion, train_loader, ne
         if scheduler:
             scheduler.step()
 
-        save_checkpoint(model.state_dict(), True, filename="model_checkpoint_resnet_simclr.pth.tar")
+        if loss_epoch < best_train_loss:
+            save_checkpoint(model.state_dict(), True, filename=f"model_checkpoint_resnet_simclr{epoch}.pth.tar")
+            best_train_loss = loss_epoch
+        else:
+            save_checkpoint(model.state_dict(), False, filename=f"model_checkpoint_resnet_simclr{epoch}.pth.tar")
+            best_train_loss = loss_epoch
 
-    save_checkpoint(model.state_dict(), True, filename="model_checkpoint_resnet_simclr.pth.tar")
+    if loss_epoch < best_train_loss:
+        save_checkpoint(model.state_dict(), True, filename=f"model_checkpoint_resnet_simclr{config['epochs']}.pth.tar")
+    else:
+        save_checkpoint(model.state_dict(), False, filename=f"model_checkpoint_resnet_simclr{config['epochs']}.pth.tar")
 
 
 
