@@ -141,7 +141,7 @@ def validate(model: nn.Module, val_dataloader: DataLoader, criterion, metric=Non
     return losses.avg, metric_scores.avg
 
 
-def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint.pth.tar"):
+def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint_resnet_simclr.pth.tar"):
     """
     saves model to a file
     :param state: state dict
@@ -151,7 +151,7 @@ def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint.pth.t
     """
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, "model_best.pth.tar")
+        shutil.copyfile(filename, "model_best_resnet_simclr.pth.tar")
 
 
 def load_checkpoint(model, optimizer, path):
