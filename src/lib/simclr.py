@@ -21,7 +21,7 @@ class TransformsSimCLR:
 
         self.validation_transforms = T.Compose([
             T.ToTensor(),
-            T.Resize(size=size),
+            T.RandomResizedCrop(size=size, scale=(1.0, 1.0)),
             # Taking the means of the normal distributions of the 3 channels
             # since we are moving to grayscale
             T.Normalize(mean=np.mean([0.485, 0.456, 0.406]).repeat(n_channel),
