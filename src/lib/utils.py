@@ -8,6 +8,7 @@ from matplotlib import animation, rc
 from tqdm import tqdm
 import torch
 from lib.sequence import Sequence
+from simclr.modules import LARS
 
 # matplotlib.use("TkAgg")
 rc("animation", html="jshtml")
