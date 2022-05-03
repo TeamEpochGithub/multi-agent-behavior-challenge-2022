@@ -175,7 +175,6 @@ def mean_reach(seq: Sequence) -> np.ndarray(dtype=float, shape=(1800, 3)):
 
 
 def head_angle(seq: Sequence) -> np.ndarray(dtype=float, shape=(1800, 3)):
-
     frames = seq.frames
 
     nose1 = frames[:, 0:2]
