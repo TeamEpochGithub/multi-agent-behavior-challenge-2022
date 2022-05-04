@@ -151,7 +151,7 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
     if not validate_submission_round2(submission, frame_map):
         raise Exception("Your submission dictionary did not pass the validation script")
 
-    return submission_dict
+    return submission
         
 
     
