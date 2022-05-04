@@ -139,11 +139,13 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
 
         return submission
 
-    for name, frange in frame_map.items():
+    for count, (name, frange) in tqdm(enumerate(frame_map.items()), total=len(frame_map.items())):
         start = config["model_embeddings_size"]
         for feature, item in precomputed.items():
+
+            temporary = np.array(item[count])
             reshaped_feature = item.reshape(1800, -1)
-            submission[frange[0]:frange[1], start: start+reshaped_feature.shape[1]] = reshaped_feature
+            submission[frange[0]:frange[1], start:start+reshaped_feature.shape[1]] = reshaped_feature
             start += reshaped_feature.shape[1]
 
     assert end == num_total_frames
