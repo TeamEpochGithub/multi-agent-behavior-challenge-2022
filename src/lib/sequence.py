@@ -2,10 +2,15 @@ import numpy as np
 
 
 class Sequence:
-    def __init__(self, name, seq_array: np.ndarray, chasing_labels=None, light_label=None):
+    def __init__(
+        self, name, seq_array: np.ndarray, chasing_labels=None, light_label=None, one_mouse=False
+    ):
         self.name = name
         # 72 = (num mice = 3) x (body parts = 12) x (x, y = 2)
-        flat = seq_array.reshape((1800, 72))
+        if one_mouse:
+            flat = seq_array.reshape((1800, 24))
+        else:
+            flat = seq_array.reshape((1800, 72))
         self.frames = flat
         self.light_label = light_label
         self.chasing_labels = chasing_labels
