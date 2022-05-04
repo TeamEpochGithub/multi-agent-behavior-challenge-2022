@@ -107,10 +107,10 @@ def submission_embeddings(
 
 
 def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loader, sub_clips:dict, sub_seq:list, 
-        func=None, embd: list = None) -> dict:
+        frame_map: dict, precomputed: dict = None) -> dict:
 
 
-    embeddings_model_size = config["model_embd_size"]
+    embeddings_model_size = config["model_embed_size"]
     features_size = config["feature_size"]
     sub_clips_items = sub_clips["sequences"].items()
     num_total_frames = np.sum([seq["keypoints"].shape[0] for _, seq in sub_clips_items])
@@ -121,65 +121,34 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
     if embeddings_size > 128:
         raise ValueError(f"The maximum number of embeddings is 128, you have {embeddings_size}")
 
-    frame_number_map = {}
-    start = 0
-
-
     for data in tqdm(prediction_loader, total=len(prediction_loader)):
         with torch.no_grad():
             images = data['image'].to(config['device'])
             output = model.projector(model.encoder(images))
             output = output.cpu().numpy()
-            submission[idx:idx+len(output), :config["model_embds_size"]] = output
+            submission[idx:idx+len(output), :config["model_embeddings_size"]] = output
             idx += len(output)
 
-    if config["only_model_embeddings"] == True:
+    end = idx # ending index after all the frames have been processed
+
+    if config["only_model_embeddings"]:
 
         assert end == num_total_frames
-        submission_dict = {"frame_number_map": frame_number_map, "embeddings": submission}
-
-        if not validate_submission(submission_dict, sub_clips):
+        if not validate_submission_round2(submission, frame_map):
             raise Exception("Your submission dictionary did not pass the validation script")
 
-        return submission_dict
+        return submission
 
-    for sequence_key in tqdm(sub_clips['sequences']):
-        seq_index = find_seq(sequence_key, sub_seq) 
-        keypoints = sub_clips["sequences"][sequence_key]["keypoints"]
-        # in the notebook you have full energies here, needs to be passed in embd
-        # also reshaping needs to be done before and passed directly in embd
-        last = config["model_embds_size"]
-        # precomputed features
-        for e in embd:
-            if e[seq_index].shape != (3,):
-                reshaped_e = e[seq_index].reshape(1800, -1)
-                submission[:, last : last + reshaped_e.shape[1]] = reshaped_e
-                last += reshaped_e.shape[1]
-            else:
-                submission[:, last : last + 3] = e[seq_index]
-                last += 3
-
-        # single frame features
-        if config["use_single_frame"]:
-            if func is None:
-                raise ValueError("You have not passed any functions in func.")
-
-            for i in range(len(keypoints)):
-                lastx = last
-                for f in func:
-                    temp = f(keypoints[i].flatten())
-                    submission[i, lastx : lastx + temp.shape[0]] = temp
-                    lastx = lastx + temp.shape[0]
-
-        end = start + len(keypoints)
-        submission[start:end] = submission
-        frame_number_map[sequence_key] = (start, end)
-        start = end
+    for name, frange in frame_map.items():
+        start = config["model_embeddings_size"]
+        for feature, item in precomputed.items():
+            reshaped_feature = item.reshape(1800, -1)
+            submission[frange[0]:frange[1], start: start+reshaped_feature.shape[1]] = reshaped_feature
+            start += reshaped_feature.shape[1]
 
     assert end == num_total_frames
-    submission_dict = {"frame_number_map": frame_number_map, "embeddings": submission}
 
-    if not validate_submission(submission_dict, sub_clips):
+    if not validate_submission_round2(submission, frame_map):
         raise Exception("Your submission dictionary did not pass the validation script")
 
     return submission_dict
@@ -245,3 +214,31 @@ def save_submission_file(filename, sub_dict: dict):
     :return:
     """
     np.save(filename, sub_dict)
+
+
+def validate_submission_round2(submission, frame_number_map):
+    if not isinstance(submission, np.ndarray):
+        print("Embeddings should be a numpy array")
+        return False
+    elif not len(submission.shape) == 2:
+        print("Embeddings should be 2D array")
+        return False
+    elif not submission.shape[1] <= 128:
+        print("Embeddings too large, max allowed is 128")
+        return False
+    elif not isinstance(submission[0, 0], np.float32):
+        print(f"Embeddings are not float32")
+        return False
+
+    total_clip_length = frame_number_map[list(frame_number_map.keys())[-1]][1]
+
+    if not len(submission) == total_clip_length:
+        print(f"Emebddings length doesn't match submission clips total length")
+        return False
+
+    if not np.isfinite(submission).all():
+        print(f"Emebddings contains NaN or infinity")
+        return False
+
+    print("All checks passed")
+    return True
