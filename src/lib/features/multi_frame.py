@@ -169,8 +169,8 @@ def mean_reach(seq: Sequence) -> np.ndarray(dtype=float, shape=(1800, 3)):
     for m in range(3):
         distances = []
         for keypoint in keypoints:
-            distances.append(np.linalg.norm(centers[m] - keypoint[m], axis=2))
-        result[:, m] = np.mean(distances, axis=1)
+            distances.append(np.linalg.norm(centers[m] - keypoint[m], axis=1))
+        result[:, m] = np.mean(distances, axis=0)
     return result
 
 
