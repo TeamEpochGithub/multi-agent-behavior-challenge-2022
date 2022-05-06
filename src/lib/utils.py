@@ -296,6 +296,16 @@ def convert_seqs_to_vame(sequences: [Sequence]) -> pd.DataFrame:
 
 def load_optimizer(optimizer, epochs, weight_decay, batch_size, model):
 
+    """
+    Optimizer to be used in combination with the ResNet-SimCLR model.
+
+    :param optimizer: optimizer of the model
+    :param epochs: number of epochs on which the model is trained
+    :param weight_decay: weight_decay value used for the scheduler
+    :param batch_size: size of the batch_size used in the Dataloader
+    :param model: model which is to be trained
+    :return: tuple containing the optimizer and the scheduler to be used
+    """
     scheduler = None
     if optimizer == "Adam":
         optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)  # TODO: LARS
@@ -332,6 +342,15 @@ def save_model(epoch, model_path, model, optimizer):
 
 def bounding_box_keypoints(datafolder: str,filename: str, padbbox: int=50, crop_size: int=512,save: bool=False):
     """
+
+    Bounding box creation from the keypoints of each frame.
+
+    :param datafolder: path of the data where the keypoints are stored
+    :param filename: name of the file in which the keypoints are stored
+    :param padbbox: size of the padbbox
+    :param crop_size: size of the crop_size
+    :param save: True for the keypoints to be saved on the machine, False otherwise
+    :return: keypoints with the bounding boxes
     """
 
     keypoints = np.load(os.path.join(datafolder, filename), allow_pickle=True).item()
@@ -352,7 +371,7 @@ def bounding_box_keypoints(datafolder: str,filename: str, padbbox: int=50, crop_
         keypoints['sequences'][sk]['bbox'] = np.array(bboxes)
 
 
-    if save == True:
+    if save:
         np.save(os.path.join(datafolder, 'submission_keypoints_bbox.npy'), keypoints)
 
     return keypoints

@@ -5,6 +5,10 @@ from simclr import SimCLR
 import torchvision.transforms as T
 
 class TransformsSimCLR:
+
+    """
+    Class which is used to transform the data before being fed to the SimCLR.
+    """
     def __init__(self, size, pretrained=True, n_channel=3, validation=False) -> None:
         self.train_transforms = T.Compose([
             T.ToTensor(),
@@ -41,6 +45,12 @@ class TransformsSimCLR:
 
 def get_simclr_model(IS_PRETRAINED: bool, n_channel: int, embedding_size: int, device: str):
     """
+    Combines the ResNet with the Pytorch implementation of the SimCLR
+    :param IS_PRETRAINED: True if using a pretrained model
+    :param n_channel: number of channels to use
+    :param embedding_size: size of the embeddings in the model
+    :param device: device on which the model is trained
+    :return: torch model
     """
     resnet_encoder = torchvision.models.resnet50(pretrained=IS_PRETRAINED)
 

@@ -20,7 +20,7 @@ def find_seq(name, sub_sequences):
     raise ValueError
 
 
-def submission_embeddings(
+def submission_embeddings_round1(
     config: dict, sub_clips: dict, model: nn.Module, sub_seq: list, func=None, embd: list = None
 ) -> dict:
     """
@@ -31,7 +31,7 @@ def submission_embeddings(
     :param model: trained model for submission
     :param sub_seq: list of sequences, used for find_seq function
     :param func: list of single-frame feature functions
-    :param embd: list of np.ndarrays of precomputed features (e.g velocity)
+    :param embd: list of np.ndarray of precomputed features (e.g velocity)
     :return: dict ready for submission
     (however should be validated with the validate function before using it)
     """
@@ -105,10 +105,11 @@ def submission_embeddings(
 
     return submission_dict
 
-
-def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loader, sub_clips:dict, sub_seq:list, 
-        frame_map: dict, precomputed: dict = None) -> dict:
-
+def submission_model_embeddings_round2(config: dict, model: nn.Module, prediction_loader, sub_clips: dict, validation=True, add_all=True) -> np.ndarray:
+    """
+    Prediction for the embeddings of every frame given by the specified model + precomputed features.
+    Model has to be of architecture ResNet + SIMCLR.
+    """
 
     embeddings_model_size = config["model_embed_size"]
     features_size = config["feature_size"]
@@ -116,7 +117,7 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
     num_total_frames = np.sum([seq["keypoints"].shape[0] for _, seq in sub_clips_items])
     embeddings_size = embeddings_model_size + features_size
     submission = np.empty((num_total_frames, embeddings_size), dtype=np.float32)
-    idx=0
+    idx = 0
 
     if embeddings_size > 128:
         raise ValueError(f"The maximum number of embeddings is 128, you have {embeddings_size}")
@@ -131,32 +132,36 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
 
     end = idx # ending index after all the frames have been processed
 
-    if config["only_model_embeddings"]:
+    if add_all:
+        submission = add_features(submission, frame_map, precomputed, config["model_embeddings_size"])
 
+    if validation:
         assert end == num_total_frames
         if not validate_submission_round2(submission, frame_map):
             raise Exception("Your submission dictionary did not pass the validation script")
 
-        return submission
+    return submission
+
+def add_features(submission: np.ndarray, frame_map: dict, precomputed: dict, begin: int) -> np.ndarray:
+    """
+    Add precomputed features to the submission np.ndarray.
+
+    :param submission: np.ndarray with the original model embeddings
+    :param frame_map: dict which contains all the sequence keys
+    :param precomputed: dict with all the multi-frame features
+    :param begin: index where to start inserting the features (should be the size of the model embeddings)
+    :return: np.ndarray ready for submission
+    """
 
     for count, (name, frange) in tqdm(enumerate(frame_map.items()), total=len(frame_map.items())):
-        start = config["model_embeddings_size"]
+        start = begin
         for feature, item in precomputed.items():
             temporary = np.array(item[count])
             reshaped_feature = temporary.reshape(1800, -1)
-            submission[frange[0]:frange[1], start:start+reshaped_feature.shape[1]] = reshaped_feature
+            submission[frange[0]:frange[1], start:start+reshaped_feature[1]] = reshaped_feature
             start += reshaped_feature.shape[1]
 
-    assert end == num_total_frames
-
-    if not validate_submission_round2(submission, frame_map):
-        raise Exception("Your submission dictionary did not pass the validation script")
-
     return submission
-        
-
-    
-
 
 def validate_submission(submission, submission_clips):
     """
@@ -216,8 +221,10 @@ def save_submission_file(filename, sub_dict: dict):
     """
     np.save(filename, sub_dict)
 
-
 def validate_submission_round2(submission, frame_number_map):
+    """
+    Validation of the submission ndarray for the second round of the competition.
+    """
     if not isinstance(submission, np.ndarray):
         print("Embeddings should be a numpy array")
         return False

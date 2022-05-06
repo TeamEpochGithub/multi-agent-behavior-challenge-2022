@@ -206,7 +206,17 @@ def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) 
     return best_score, is_best
 
 def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer, config: dict):
-    
+    """
+    Train function for a single epoch of the training loop.
+
+    :param epoch: the specific epoch on which the function is called
+    :param train_loader: torch Dataloader used to feed the data to the model
+    :param model: model to be trained
+    :param criterion: loss function based on which the model learns
+    :param optimizer: optimizer of the model
+    :param config: dict with all the necessary train params
+    :return: loss on the current epoch
+    """
 
     loss_epoch = 0
     # tqdm_iter = tqdm(train_loader, total=len(train_loader)) 
@@ -237,10 +247,23 @@ def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer
     return loss_epoch
 
 
-def train(model, config: dict, optimizer, scheduler, criterion, train_loader, neptune_run):
+def train(model: nn.Module, config: dict, optimizer,
+          scheduler, criterion, train_loader, neptune_run):
 
+    """
+    Main train function for the ResNet-SimCLR model.
+
+    :param model: torch model that needs to be trained
+    :param config: dict with all the necessary parameters for training
+    :param optimizer: optimizer of the model to be trained
+    :param scheduler: scheduler
+    :param criterion: loss function on which the model is trained
+    :param train_loader: torch Dataloader used to feed data to the model
+    :param neptune_run: neptune.ai instance used to keep track of params and stats of
+                        the model
+    :return:
+    """
     neptune_run["parameters"] = config
-
 
     best_train_loss = 1e9 # big number
     for epoch in range(config["epochs"]):
