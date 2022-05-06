@@ -167,7 +167,7 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
 
     return submission
 
-def submission_model_embeddings_round2(config: dict, model: nn.Module, prediction_loader, sub_clips: dict, validation=True) -> np.ndarray:
+def submission_model_embeddings_round2(config: dict, model: nn.Module, prediction_loader, sub_clips: dict, validation=True, frame_map:dict=None) -> np.ndarray:
     """
     Prediction for the embeddings of every frame given by the specified model.
     Model has to be of architecture ResNet + SIMClr
@@ -196,6 +196,8 @@ def submission_model_embeddings_round2(config: dict, model: nn.Module, predictio
 
     if validation:
         assert end == num_total_frames
+        if frame_map is None:
+            raise Exception("If validation parameter is set to true, then there should also be a provided frame map")
         if not validate_submission_round2(submission, frame_map):
             raise Exception("Your submission dictionary did not pass the validation script")
 
