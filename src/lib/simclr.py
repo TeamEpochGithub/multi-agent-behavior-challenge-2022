@@ -93,6 +93,7 @@ def get_simclr_model_efficientnet(IS_PRETRAINED: bool, n_channel: int, embedding
 
 
     n_features = efficient_encoder.classifier[1].in_features
+    efficient_encoder.classifier = torch.nn.Identity()
     model = SimCLR(efficient_encoder, embedding_size, n_features)
     model = model.to(device)
     
