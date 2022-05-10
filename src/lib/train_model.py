@@ -280,13 +280,13 @@ def train(model: nn.Module, config: dict, optimizer,
             save_checkpoint(model.state_dict(), True, config, filename=f"{config['checkpoint_filename']}{epoch}.pth.tar")
             best_train_loss = loss_epoch
         else:
-            save_checkpoint(model.state_dict(), False, config, filename=f"{config['checkpoint_filename']}{epoch}.pth.tar", config)
+            save_checkpoint(model.state_dict(), False, config, filename=f"{config['checkpoint_filename']}{epoch}.pth.tar")
             best_train_loss = loss_epoch
 
     if loss_epoch < best_train_loss:
-        save_checkpoint(model.state_dict(), True, config, filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar", config)
+        save_checkpoint(model.state_dict(), True, config, filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar")
     else:
-        save_checkpoint(model.state_dict(), False, config, filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar", config)
+        save_checkpoint(model.state_dict(), False, config, filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar")
 
 
 
