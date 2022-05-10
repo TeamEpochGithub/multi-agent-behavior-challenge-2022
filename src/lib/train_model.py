@@ -141,17 +141,18 @@ def validate(model: nn.Module, val_dataloader: DataLoader, criterion, metric=Non
     return losses.avg, metric_scores.avg
 
 
-def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint.pth.tar"):
+def save_checkpoint(state: dict, is_best: bool, config: dict, filename="model_checkpoint.pth.tar"):
     """
     saves model to a file
     :param state: state dict
     :param is_best:
     :param filename:
+    :param config: config dict with all training information and hyperparams
     :return: None
     """
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, "model_best.pth.tar")
+        shutil.copyfile(filename, f"model_best_{config['model_name']}.pth.tar")
 
 
 def load_checkpoint(model, optimizer, path):
@@ -276,16 +277,16 @@ def train(model: nn.Module, config: dict, optimizer,
             scheduler.step()
 
         if loss_epoch < best_train_loss:
-            save_checkpoint(model.state_dict(), True, filename=f"model_checkpoint_resnet_simclr{epoch}.pth.tar")
+            save_checkpoint(model.state_dict(), True, config, filename=f"{config['checkpoint_filename']}{epoch}.pth.tar")
             best_train_loss = loss_epoch
         else:
-            save_checkpoint(model.state_dict(), False, filename=f"model_checkpoint_resnet_simclr{epoch}.pth.tar")
+            save_checkpoint(model.state_dict(), False, config, filename=f"{config['checkpoint_filename']}{epoch}.pth.tar", config)
             best_train_loss = loss_epoch
 
     if loss_epoch < best_train_loss:
-        save_checkpoint(model.state_dict(), True, filename=f"model_checkpoint_resnet_simclr{config['epochs']}.pth.tar")
+        save_checkpoint(model.state_dict(), True, config, filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar", config)
     else:
-        save_checkpoint(model.state_dict(), False, filename=f"model_checkpoint_resnet_simclr{config['epochs']}.pth.tar")
+        save_checkpoint(model.state_dict(), False, config, filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar", config)
 
 
 
