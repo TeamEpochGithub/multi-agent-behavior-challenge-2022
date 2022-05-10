@@ -43,7 +43,7 @@ class TransformsSimCLR:
             return self.validation_transforms(x)
 
 
-def get_simclr_model(IS_PRETRAINED: bool, n_channel: int, embedding_size: int, device: str):
+def get_simclr_model(IS_PRETRAINED: bool, n_channel: int, embedding_size: int, device: str, use_encoder: int):
     """
     Combines the ResNet with the Pytorch implementation of the SimCLR
     :param IS_PRETRAINED: True if using a pretrained model
@@ -52,18 +52,23 @@ def get_simclr_model(IS_PRETRAINED: bool, n_channel: int, embedding_size: int, d
     :param device: device on which the model is trained
     :return: torch model
     """
-    resnet_encoder = torchvision.models.resnet50(pretrained=IS_PRETRAINED)
+
+
+    if use_encoder == 0:
+        encoder = torchvision.models.resnet50(pretrained=IS_PRETRAINED) # use_encoder = 0
+    if use_encoder == 1:
+        encoder = torchvision.models.efficientnet_b7(pretrained=IS_PRETRAINED) # use_encoder = 1
 
     ## Experimental setup for multiplying the grayscale channel
     ## https://stackoverflow.com/a/54777347
-    weight = resnet_encoder.conv1.weight.clone()
-    resnet_encoder.conv1 = torch.nn.Conv2d(n_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    weight = encoder.conv1.weight.clone()
+    encoder.conv1 = torch.nn.Conv2d(n_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
     # normalize back by n_channels after tiling
-    resnet_encoder.conv1.weight.data = weight.sum(dim=1, keepdim=True).tile(1, n_channel, 1, 1)/n_channel
+    encoder.conv1.weight.data = weight.sum(dim=1, keepdim=True).tile(1, n_channel, 1, 1)/n_channel
 
 
-    n_features = resnet_encoder.fc.in_features
-    model = SimCLR(resnet_encoder, embedding_size, n_features)
+    n_features = encoder.fc.in_features
+    model = SimCLR(encoder, embedding_size, n_features)
     model = model.to(device)
     
     return model
