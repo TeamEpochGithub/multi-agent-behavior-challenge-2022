@@ -1,14 +1,16 @@
 import copy
 import itertools
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import animation, rc
-from tqdm import tqdm
 import torch
-from lib.sequence import Sequence
+from matplotlib import animation, rc
 from simclr.modules import LARS
+from tqdm import tqdm
+
+from lib.sequence import Sequence
 
 # matplotlib.use("TkAgg")
 rc("animation", html="jshtml")
@@ -329,6 +331,7 @@ def load_optimizer(optimizer, epochs, weight_decay, batch_size, model):
 
     return optimizer, scheduler
 
+
 def save_model(epoch, model_path, model, optimizer):
     out = os.path.join(model_path, "checkpoint_{}.tar".format(epoch))
 
@@ -340,7 +343,9 @@ def save_model(epoch, model_path, model, optimizer):
         torch.save(model.state_dict(), out)
 
 
-def bounding_box_keypoints(datafolder: str,filename: str, padbbox: int=50, crop_size: int=512,save: bool=False):
+def bounding_box_keypoints(
+    datafolder: str, filename: str, padbbox: int = 50, crop_size: int = 512, save: bool = False
+):
     """
 
     Bounding box creation from the keypoints of each frame.
@@ -355,23 +360,28 @@ def bounding_box_keypoints(datafolder: str,filename: str, padbbox: int=50, crop_
 
     keypoints = np.load(os.path.join(datafolder, filename), allow_pickle=True).item()
 
-    for sk in tqdm(keypoints['sequences'].keys()):
-        kp=keypoints['sequences'][sk]['keypoints']
+    for sk in tqdm(keypoints["sequences"].keys()):
+        kp = keypoints["sequences"][sk]["keypoints"]
         bboxes = []
         for frame_idx in range(len(kp)):
             allcoords = np.int32(kp[frame_idx].reshape(-1, 2))
-            minvals = max(np.min(allcoords[:, 0]) - padbbox, 0), max(np.min(allcoords[:, 1]) - padbbox, 0)
-            maxvals = min(np.max(allcoords[:, 0]) + padbbox, crop_size), min(np.max(allcoords[:, 1]) + padbbox, crop_size)
+            minvals = (
+                max(np.min(allcoords[:, 0]) - padbbox, 0),
+                max(np.min(allcoords[:, 1]) - padbbox, 0),
+            )
+            maxvals = (
+                min(np.max(allcoords[:, 0]) + padbbox, crop_size),
+                min(np.max(allcoords[:, 1]) + padbbox, crop_size),
+            )
 
             bbox = (*minvals, *maxvals)
             bbox = np.array(bbox)
-            bbox = np.int32(bbox*224/512)
+            bbox = np.int32(bbox * 224 / 512)
             bboxes.append(bbox)
 
-        keypoints['sequences'][sk]['bbox'] = np.array(bboxes)
-
+        keypoints["sequences"][sk]["bbox"] = np.array(bboxes)
 
     if save:
-        np.save(os.path.join(datafolder, 'submission_keypoints_bbox.npy'), keypoints)
+        np.save(os.path.join(datafolder, "submission_keypoints_bbox.npy"), keypoints)
 
     return keypoints

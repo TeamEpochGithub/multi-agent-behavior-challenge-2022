@@ -106,8 +106,14 @@ def submission_embeddings_round1(
     return submission_dict
 
 
-def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loader, sub_clips:dict,
-        frame_map: dict, precomputed: dict = None) -> np.ndarray:
+def submission_embeddings_simclr(
+    config: dict,
+    model: nn.Module,
+    prediction_loader,
+    sub_clips: dict,
+    frame_map: dict,
+    precomputed: dict = None,
+) -> np.ndarray:
 
     """
     Creates a ready for submission numpy ndarray with the ResNet and SimCLR models.
@@ -129,20 +135,20 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
     num_total_frames = np.sum([seq["keypoints"].shape[0] for _, seq in sub_clips_items])
     embeddings_size = embeddings_model_size + features_size
     submission = np.empty((num_total_frames, embeddings_size), dtype=np.float32)
-    idx=0
+    idx = 0
 
     if embeddings_size > 128:
         raise ValueError(f"The maximum number of embeddings is 128, you have {embeddings_size}")
 
     for data in tqdm(prediction_loader, total=len(prediction_loader)):
         with torch.no_grad():
-            images = data['image'].to(config['device'])
+            images = data["image"].to(config["device"])
             output = model.projector(model.encoder(images))
             output = output.cpu().numpy()
-            submission[idx:idx+len(output), :config["model_embeddings_size"]] = output
+            submission[idx : idx + len(output), : config["model_embeddings_size"]] = output
             idx += len(output)
 
-    end = idx # ending index after all the frames have been processed
+    end = idx  # ending index after all the frames have been processed
 
     if config["only_model_embeddings"]:
 
@@ -157,7 +163,9 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
         for feature, item in precomputed.items():
             temporary = np.array(item[count])
             reshaped_feature = temporary.reshape(1800, -1)
-            submission[frange[0]:frange[1], start:start+reshaped_feature.shape[1]] = reshaped_feature
+            submission[
+                frange[0] : frange[1], start : start + reshaped_feature.shape[1]
+            ] = reshaped_feature
             start += reshaped_feature.shape[1]
 
     assert end == num_total_frames
@@ -167,7 +175,15 @@ def submission_embeddings_simclr(config: dict, model: nn.Module,prediction_loade
 
     return submission
 
-def submission_model_embeddings_round2(config: dict, model: nn.Module, prediction_loader, sub_clips: dict, validation=True, frame_map:dict=None) -> np.ndarray:
+
+def submission_model_embeddings_round2(
+    config: dict,
+    model: nn.Module,
+    prediction_loader,
+    sub_clips: dict,
+    validation=True,
+    frame_map: dict = None,
+) -> np.ndarray:
     """
     Prediction for the embeddings of every frame given by the specified model.
     Model has to be of architecture ResNet + SIMClr
@@ -186,24 +202,29 @@ def submission_model_embeddings_round2(config: dict, model: nn.Module, predictio
 
     for data in tqdm(prediction_loader, total=len(prediction_loader)):
         with torch.no_grad():
-            images = data['image'].to(config['device'])
+            images = data["image"].to(config["device"])
             output = model.projector(model.encoder(images))
             output = output.cpu().numpy()
-            submission[idx:idx+len(output), :config["model_embeddings_size"]] = output
+            submission[idx : idx + len(output), : config["model_embeddings_size"]] = output
             idx += len(output)
 
-    end = idx # ending index after all the frames have been processed
+    end = idx  # ending index after all the frames have been processed
 
     if validation:
         assert end == num_total_frames
         if frame_map is None:
-            raise Exception("If validation parameter is set to true, then there should also be a provided frame map")
+            raise Exception(
+                "If validation parameter is set to true, then there should also be a provided frame map"
+            )
         if not validate_submission_round2(submission, frame_map):
             raise Exception("Your submission dictionary did not pass the validation script")
 
     return submission
 
-def add_features(submission: np.ndarray, frame_map: dict, precomputed: dict, begin: int) -> np.ndarray:
+
+def add_features(
+    submission: np.ndarray, frame_map: dict, precomputed: dict, begin: int
+) -> np.ndarray:
     """
     Add precomputed features to the submission np.ndarray.
 
@@ -219,10 +240,13 @@ def add_features(submission: np.ndarray, frame_map: dict, precomputed: dict, beg
         for feature, item in precomputed.items():
             temporary = np.array(item[count])
             reshaped_feature = temporary.reshape(1800, -1)
-            submission[frange[0]:frange[1], start:start+reshaped_feature[1]] = reshaped_feature
+            submission[
+                frange[0] : frange[1], start : start + reshaped_feature[1]
+            ] = reshaped_feature
             start += reshaped_feature.shape[1]
 
     return submission
+
 
 def validate_submission(submission, submission_clips):
     """
@@ -282,6 +306,7 @@ def save_submission_file(filename, sub_dict: dict):
     """
     np.save(filename, sub_dict)
 
+
 def validate_submission_round2(submission, frame_number_map):
     """
     Validation of the submission ndarray for the second round of the competition.
@@ -296,17 +321,17 @@ def validate_submission_round2(submission, frame_number_map):
         print("Embeddings too large, max allowed is 128")
         return False
     elif not isinstance(submission[0, 0], np.float32):
-        print(f"Embeddings are not float32")
+        print("Embeddings are not float32")
         return False
 
     total_clip_length = frame_number_map[list(frame_number_map.keys())[-1]][1]
 
     if not len(submission) == total_clip_length:
-        print(f"Emebddings length doesn't match submission clips total length")
+        print("Embeddings length doesn't match submission clips total length")
         return False
 
     if not np.isfinite(submission).all():
-        print(f"Emebddings contains NaN or infinity")
+        print("Embeddings contain NaN or infinity")
         return False
 
     print("All checks passed")

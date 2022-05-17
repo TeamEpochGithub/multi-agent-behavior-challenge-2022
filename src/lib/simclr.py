@@ -1,39 +1,48 @@
 import numpy as np
 import torch
 import torchvision
-from simclr import SimCLR
 import torchvision.transforms as T
+from simclr import SimCLR
+
 
 class TransformsSimCLR:
-
     """
     Class which is used to transform the data before being fed to the SimCLR.
     """
-    def __init__(self, size, pretrained=True, n_channel=3, validation=False) -> None:
-        self.train_transforms = T.Compose([
-            T.ToTensor(),
-            T.RandomResizedCrop(size=size, scale=(0.25, 1.0)),
-            T.RandomHorizontalFlip(),
-            T.RandomVerticalFlip(),
-            # Taking the means of the normal distributions of the 3 channels
-            # since we are moving to grayscale
-            T.Normalize(mean=np.mean([0.485, 0.456, 0.406]).repeat(n_channel),
-                        std=np.sqrt(
-                            (np.array([0.229, 0.224, 0.225])**2).sum()/9).repeat(n_channel)
-                        ) if pretrained is True else T.Lambda(lambda x: x)
-        ])
 
-        self.validation_transforms = T.Compose([
-            T.ToTensor(),
-            T.RandomResizedCrop(size=size, scale=(1.0, 1.0)),
-            # Taking the means of the normal distributions of the 3 channels
-            # since we are moving to grayscale
-            T.Normalize(mean=np.mean([0.485, 0.456, 0.406]).repeat(n_channel),
-                        std=np.sqrt(
-                            (np.array([0.229, 0.224, 0.225])**2).sum()/9).repeat(n_channel)
-                        ) if pretrained is True else T.Lambda(lambda x: x)
-        ])
-        
+    def __init__(self, size, pretrained=True, n_channel=3, validation=False) -> None:
+        self.train_transforms = T.Compose(
+            [
+                T.ToTensor(),
+                T.RandomResizedCrop(size=size, scale=(0.25, 1.0)),
+                T.RandomHorizontalFlip(),
+                T.RandomVerticalFlip(),
+                # Taking the means of the normal distributions of the 3 channels
+                # since we are moving to grayscale
+                T.Normalize(
+                    mean=np.mean([0.485, 0.456, 0.406]).repeat(n_channel),
+                    std=np.sqrt((np.array([0.229, 0.224, 0.225]) ** 2).sum() / 9).repeat(n_channel),
+                )
+                if pretrained is True
+                else T.Lambda(lambda x: x),
+            ]
+        )
+
+        self.validation_transforms = T.Compose(
+            [
+                T.ToTensor(),
+                T.RandomResizedCrop(size=size, scale=(1.0, 1.0)),
+                # Taking the means of the normal distributions of the 3 channels
+                # since we are moving to grayscale
+                T.Normalize(
+                    mean=np.mean([0.485, 0.456, 0.406]).repeat(n_channel),
+                    std=np.sqrt((np.array([0.229, 0.224, 0.225]) ** 2).sum() / 9).repeat(n_channel),
+                )
+                if pretrained is True
+                else T.Lambda(lambda x: x),
+            ]
+        )
+
         self.validation = validation
 
     def __call__(self, x):
@@ -53,24 +62,29 @@ def get_simclr_model_resnet(IS_PRETRAINED: bool, n_channel: int, embedding_size:
     :return: torch model
     """
 
-
     resnet_encoder = torchvision.models.resnet50(pretrained=IS_PRETRAINED)
 
-    ## Experimental setup for multiplying the grayscale channel
-    ## https://stackoverflow.com/a/54777347
+    # Experimental setup for multiplying the grayscale channel
+    # https://stackoverflow.com/a/54777347
     weight = resnet_encoder.conv1.weight.clone()
-    resnet_encoder.conv1 = torch.nn.Conv2d(n_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    resnet_encoder.conv1 = torch.nn.Conv2d(
+        n_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+    )
     # normalize back by n_channels after tiling
-    resnet_encoder.conv1.weight.data = weight.sum(dim=1, keepdim=True).tile(1, n_channel, 1, 1)/n_channel
-
+    resnet_encoder.conv1.weight.data = (
+        weight.sum(dim=1, keepdim=True).tile(1, n_channel, 1, 1) / n_channel
+    )
 
     n_features = resnet_encoder.fc.in_features
     model = SimCLR(resnet_encoder, embedding_size, n_features)
     model = model.to(device)
-    
+
     return model
 
-def get_simclr_model_efficientnet(IS_PRETRAINED: bool, n_channel: int, embedding_size: int, device: str):
+
+def get_simclr_model_efficientnet(
+    IS_PRETRAINED: bool, n_channel: int, embedding_size: int, device: str
+):
     """
     Combines the EfficientNet with the Pytorch implementation of the SimCLR
     :param IS_PRETRAINED: True if using a pretrained model
@@ -80,21 +94,23 @@ def get_simclr_model_efficientnet(IS_PRETRAINED: bool, n_channel: int, embedding
     :return: torch model
     """
 
-
     efficient_encoder = torchvision.models.efficientnet_b7(pretrained=IS_PRETRAINED)
 
-    ## Experimental setup for multiplying the grayscale channel
-    ## https://stackoverflow.com/a/54777347
-    ## Doing the same for EfficientNet as for ResNet50
+    # Experimental setup for multiplying the grayscale channel
+    # https://stackoverflow.com/a/54777347
+    # Doing the same for EfficientNet as for ResNet50
     weight = efficient_encoder.features[0][0].weight.clone()
-    efficient_encoder.features[0][0] = torch.nn.Conv2d(n_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    efficient_encoder.features[0][0] = torch.nn.Conv2d(
+        n_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+    )
     # normalize back by n_channels after tiling
-    efficient_encoder.features[0][0].weight.data = weight.sum(dim=1, keepdim=True).tile(1, n_channel, 1, 1)/n_channel
-
+    efficient_encoder.features[0][0].weight.data = (
+        weight.sum(dim=1, keepdim=True).tile(1, n_channel, 1, 1) / n_channel
+    )
 
     n_features = efficient_encoder.classifier[1].in_features
     efficient_encoder.classifier = torch.nn.Identity()
     model = SimCLR(efficient_encoder, embedding_size, n_features)
     model = model.to(device)
-    
+
     return model

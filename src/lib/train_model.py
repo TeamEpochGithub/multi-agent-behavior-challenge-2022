@@ -1,12 +1,11 @@
 import shutil
 
-
-from tqdm import tqdm
 import torch
 from torch import nn
 from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 
 from lib.util.average_meter import AverageMeter
 
@@ -206,6 +205,7 @@ def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) 
         best_score = min(val_loss, best_score)
     return best_score, is_best
 
+
 def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer, config: dict):
     """
     Train function for a single epoch of the training loop.
@@ -220,19 +220,18 @@ def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer
     """
 
     loss_epoch = 0
-    # tqdm_iter = tqdm(train_loader, total=len(train_loader)) 
-	# Total train loader is huge, he're we limiting to steps per epoch
+    # tqdm_iter = tqdm(train_loader, total=len(train_loader))
+    # Total train loader is huge, he're we limiting to steps per epoch
     tqdm_iter = tqdm(train_loader, total=config["steps_per_epoch"])
 
     tqdm_iter.set_description(f"Epoch {epoch}")
     for step, batch in enumerate(tqdm_iter):
         optimizer.zero_grad()
-        x_i = batch['image'][0].cuda(non_blocking=True)
-        x_j = batch['image'][1].cuda(non_blocking=True)
+        x_i = batch["image"][0].cuda(non_blocking=True)
+        x_j = batch["image"][1].cuda(non_blocking=True)
 
         # positive pair, with encoding
         h_i, h_j, z_i, z_j = model(x_i, x_j)
-
 
         loss = criterion(z_i, z_j)
         loss.backward()
@@ -248,8 +247,9 @@ def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer
     return loss_epoch
 
 
-def train(model: nn.Module, config: dict, optimizer,
-          scheduler, criterion, train_loader, neptune_run):
+def train(
+    model: nn.Module, config: dict, optimizer, scheduler, criterion, train_loader, neptune_run
+):
 
     """
     Main train function for the ResNet-SimCLR model.
@@ -266,7 +266,7 @@ def train(model: nn.Module, config: dict, optimizer,
     """
     neptune_run["parameters"] = config
 
-    best_train_loss = 1e9 # big number
+    best_train_loss = 1e9  # big number
     for epoch in range(config["epochs"]):
         # lr = optimizer.param_groups[0]['lr']
         loss_epoch = train_epoch(epoch, train_loader, model, criterion, optimizer, config)
@@ -277,17 +277,33 @@ def train(model: nn.Module, config: dict, optimizer,
             scheduler.step()
 
         if loss_epoch < best_train_loss:
-            save_checkpoint(model.state_dict(), True, config, filename=f"{config['checkpoint_filename']}{epoch}.pth.tar")
+            save_checkpoint(
+                model.state_dict(),
+                True,
+                config,
+                filename=f"{config['checkpoint_filename']}{epoch}.pth.tar",
+            )
             best_train_loss = loss_epoch
         else:
-            save_checkpoint(model.state_dict(), False, config, filename=f"{config['checkpoint_filename']}{epoch}.pth.tar")
+            save_checkpoint(
+                model.state_dict(),
+                False,
+                config,
+                filename=f"{config['checkpoint_filename']}{epoch}.pth.tar",
+            )
             best_train_loss = loss_epoch
 
     if loss_epoch < best_train_loss:
-        save_checkpoint(model.state_dict(), True, config, filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar")
+        save_checkpoint(
+            model.state_dict(),
+            True,
+            config,
+            filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar",
+        )
     else:
-        save_checkpoint(model.state_dict(), False, config, filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar")
-
-
-
-
+        save_checkpoint(
+            model.state_dict(),
+            False,
+            config,
+            filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar",
+        )
