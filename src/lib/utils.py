@@ -1,10 +1,14 @@
 import copy
 import itertools
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import torch
 from matplotlib import animation, rc
+from simclr.modules import LARS
+from tqdm import tqdm
 
 from lib.sequence import Sequence
 
@@ -290,3 +294,94 @@ def convert_seqs_to_vame(sequences: [Sequence]) -> pd.DataFrame:
 
     v_d_cols = pd.MultiIndex.from_tuples(itertools.product(top, mouse_kpt_names, x_y_l))
     return pd.DataFrame(data=vame_data, columns=v_d_cols)
+
+
+def load_optimizer(optimizer, epochs, weight_decay, batch_size, model):
+
+    """
+    Optimizer to be used in combination with the ResNet-SimCLR model.
+
+    :param optimizer: optimizer of the model
+    :param epochs: number of epochs on which the model is trained
+    :param weight_decay: weight_decay value used for the scheduler
+    :param batch_size: size of the batch_size used in the Dataloader
+    :param model: model which is to be trained
+    :return: tuple containing the optimizer and the scheduler to be used
+    """
+    scheduler = None
+    if optimizer == "Adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)  # TODO: LARS
+    elif optimizer == "LARS":
+        # optimized using LARS with linear learning rate scaling
+        # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 10−6.
+        learning_rate = 0.3 * batch_size / 256
+        optimizer = LARS(
+            model.parameters(),
+            lr=learning_rate,
+            weight_decay=weight_decay,
+            exclude_from_weight_decay=["batch_normalization", "bias"],
+        )
+
+        # "decay the learning rate with the cosine decay schedule without restarts"
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, epochs, eta_min=0, last_epoch=-1
+        )
+    else:
+        raise NotImplementedError
+
+    return optimizer, scheduler
+
+
+def save_model(epoch, model_path, model, optimizer):
+    out = os.path.join(model_path, "checkpoint_{}.tar".format(epoch))
+
+    # To save a DataParallel model generically, save the model.module.state_dict().
+    # This way, you have the flexibility to load the model any way you want to any device you want.
+    if isinstance(model, torch.nn.DataParallel):
+        torch.save(model.module.state_dict(), out)
+    else:
+        torch.save(model.state_dict(), out)
+
+
+def bounding_box_keypoints(
+    datafolder: str, filename: str, padbbox: int = 50, crop_size: int = 512, save: bool = False
+):
+    """
+
+    Bounding box creation from the keypoints of each frame.
+
+    :param datafolder: path of the data where the keypoints are stored
+    :param filename: name of the file in which the keypoints are stored
+    :param padbbox: size of the padbbox
+    :param crop_size: size of the crop_size
+    :param save: True for the keypoints to be saved on the machine, False otherwise
+    :return: keypoints with the bounding boxes
+    """
+
+    keypoints = np.load(os.path.join(datafolder, filename), allow_pickle=True).item()
+
+    for sk in tqdm(keypoints["sequences"].keys()):
+        kp = keypoints["sequences"][sk]["keypoints"]
+        bboxes = []
+        for frame_idx in range(len(kp)):
+            allcoords = np.int32(kp[frame_idx].reshape(-1, 2))
+            minvals = (
+                max(np.min(allcoords[:, 0]) - padbbox, 0),
+                max(np.min(allcoords[:, 1]) - padbbox, 0),
+            )
+            maxvals = (
+                min(np.max(allcoords[:, 0]) + padbbox, crop_size),
+                min(np.max(allcoords[:, 1]) + padbbox, crop_size),
+            )
+
+            bbox = (*minvals, *maxvals)
+            bbox = np.array(bbox)
+            bbox = np.int32(bbox * 224 / 512)
+            bboxes.append(bbox)
+
+        keypoints["sequences"][sk]["bbox"] = np.array(bboxes)
+
+    if save:
+        np.save(os.path.join(datafolder, "submission_keypoints_bbox.npy"), keypoints)
+
+    return keypoints

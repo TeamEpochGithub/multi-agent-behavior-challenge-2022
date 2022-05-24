@@ -20,7 +20,7 @@ def find_seq(name, sub_sequences):
     raise ValueError
 
 
-def submission_embeddings(
+def submission_embeddings_round1(
     config: dict, sub_clips: dict, model: nn.Module, sub_seq: list, func=None, embd: list = None
 ) -> dict:
     """
@@ -31,10 +31,13 @@ def submission_embeddings(
     :param model: trained model for submission
     :param sub_seq: list of sequences, used for find_seq function
     :param func: list of single-frame feature functions
-    :param embd: list of np.ndarrays of precomputed features (e.g velocity)
+    :param embd: list of np.ndarray of precomputed features (e.g velocity)
     :return: dict ready for submission
     (however should be validated with the validate function before using it)
     """
+
+    if config["eval_mode"] and config["eval_mode"] == True:
+        model.eval()
 
     embeddings_model_size = config["model_embd_size"]
     features_size = config["feature_size"]
@@ -103,6 +106,148 @@ def submission_embeddings(
     return submission_dict
 
 
+def submission_embeddings_simclr(
+    config: dict,
+    model: nn.Module,
+    prediction_loader,
+    sub_clips: dict,
+    frame_map: dict,
+    precomputed: dict = None,
+) -> np.ndarray:
+
+    """
+    Creates a ready for submission numpy ndarray with the ResNet and SimCLR models.
+    The function also applies the validation script used by the baseline of
+    the competition.
+
+    :param config: configuration dict for different variables
+    :param model: model that is used for the submission (resnet + simclr)
+    :param prediction_loader: torch DataLoader which is used to feed the data to the model
+    :param sub_clips: submission clips of the second 2
+    :param frame_map: dict which contains all the sequence keys
+    :param precomputed: dict with all the multi-frame features
+    :return: numpy ndarray
+    """
+
+    embeddings_model_size = config["model_embed_size"]
+    features_size = config["feature_size"]
+    sub_clips_items = sub_clips["sequences"].items()
+    num_total_frames = np.sum([seq["keypoints"].shape[0] for _, seq in sub_clips_items])
+    embeddings_size = embeddings_model_size + features_size
+    submission = np.empty((num_total_frames, embeddings_size), dtype=np.float32)
+    idx = 0
+
+    if embeddings_size > 128:
+        raise ValueError(f"The maximum number of embeddings is 128, you have {embeddings_size}")
+
+    for data in tqdm(prediction_loader, total=len(prediction_loader)):
+        with torch.no_grad():
+            images = data["image"].to(config["device"])
+            output = model.projector(model.encoder(images))
+            output = output.cpu().numpy()
+            submission[idx : idx + len(output), : config["model_embeddings_size"]] = output
+            idx += len(output)
+
+    end = idx  # ending index after all the frames have been processed
+
+    if config["only_model_embeddings"]:
+
+        assert end == num_total_frames
+        if not validate_submission_round2(submission, frame_map):
+            raise Exception("Your submission dictionary did not pass the validation script")
+
+        return submission
+
+    for count, (name, frange) in tqdm(enumerate(frame_map.items()), total=len(frame_map.items())):
+        start = config["model_embeddings_size"]
+        for feature, item in precomputed.items():
+            temporary = np.array(item[count])
+            reshaped_feature = temporary.reshape(1800, -1)
+            submission[
+                frange[0] : frange[1], start : start + reshaped_feature.shape[1]
+            ] = reshaped_feature
+            start += reshaped_feature.shape[1]
+
+    assert end == num_total_frames
+
+    if not validate_submission_round2(submission, frame_map):
+        raise Exception("Your submission dictionary did not pass the validation script")
+
+    return submission
+
+
+def submission_model_embeddings_round2(
+    config: dict,
+    model: nn.Module,
+    prediction_loader,
+    sub_clips: dict,
+    validation=True,
+    frame_map: dict = None,
+) -> np.ndarray:
+    """
+    Prediction for the embeddings of every frame given by the specified model.
+    Model has to be of architecture ResNet + SIMClr
+    """
+
+    embeddings_model_size = config["model_embed_size"]
+    features_size = config["feature_size"]
+    sub_clips_items = sub_clips["sequences"].items()
+    num_total_frames = np.sum([seq["keypoints"].shape[0] for _, seq in sub_clips_items])
+    embeddings_size = embeddings_model_size + features_size
+    submission = np.empty((num_total_frames, embeddings_size), dtype=np.float32)
+    idx = 0
+
+    if embeddings_size > 128:
+        raise ValueError(f"The maximum number of embeddings is 128, you have {embeddings_size}")
+
+    for data in tqdm(prediction_loader, total=len(prediction_loader)):
+        with torch.no_grad():
+            images = data["image"].to(config["device"])
+            output = model.projector(model.encoder(images))
+            output = output.cpu().numpy()
+            submission[idx : idx + len(output), : config["model_embeddings_size"]] = output
+            idx += len(output)
+
+    end = idx  # ending index after all the frames have been processed
+
+    if validation:
+        assert end == num_total_frames
+        if frame_map is None:
+            raise Exception(
+                "If validation parameter is set to true, then there should also be a provided frame map"
+            )
+        if not validate_submission_round2(submission, frame_map):
+            raise Exception("Your submission dictionary did not pass the validation script")
+
+    return submission
+
+
+def add_features(
+    submission: np.ndarray, frame_map: dict, precomputed: dict, begin: int
+) -> np.ndarray:
+    """
+    Add precomputed features to the submission np.ndarray.
+
+    :param submission: np.ndarray with the original model embeddings
+    :param frame_map: dict which contains all the sequence keys
+    :param precomputed: dict with all the multi-frame features
+    :param begin: index where to start inserting the features (should be the size of the model embeddings)
+    :return: np.ndarray ready for submission
+    """
+
+    for count, (name, frange) in tqdm(enumerate(frame_map.items()), total=len(frame_map.items())):
+        start = begin
+        for feature, item in precomputed.items():
+            temporary = np.array(item[count])
+            reshaped_feature = temporary.reshape(1800, -1)
+            submission[
+                frange[0] : frange[1], start : start + reshaped_feature[1]
+            ] = reshaped_feature
+            start += reshaped_feature.shape[1]
+
+    return submission
+
+
 def validate_submission(submission, submission_clips):
     """
     Checks that the submission dict has all the specific reqs for a submission.
@@ -160,3 +305,34 @@ def save_submission_file(filename, sub_dict: dict):
     :return:
     """
     np.save(filename, sub_dict)
+
+
+def validate_submission_round2(submission, frame_number_map):
+    """
+    Validation of the submission ndarray for the second round of the competition.
+    """
+    if not isinstance(submission, np.ndarray):
+        print("Embeddings should be a numpy array")
+        return False
+    elif not len(submission.shape) == 2:
+        print("Embeddings should be 2D array")
+        return False
+    elif not submission.shape[1] <= 128:
+        print("Embeddings too large, max allowed is 128")
+        return False
+    elif not isinstance(submission[0, 0], np.float32):
+        print("Embeddings are not float32")
+        return False
+
+    total_clip_length = frame_number_map[list(frame_number_map.keys())[-1]][1]
+
+    if not len(submission) == total_clip_length:
+        print("Embeddings length doesn't match submission clips total length")
+        return False
+
+    if not np.isfinite(submission).all():
+        print("Embeddings contain NaN or infinity")
+        return False
+
+    print("All checks passed")
+    return True

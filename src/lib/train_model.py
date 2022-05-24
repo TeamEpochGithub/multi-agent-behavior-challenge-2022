@@ -5,6 +5,7 @@ from torch import nn
 from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
 
 from lib.util.average_meter import AverageMeter
 
@@ -139,17 +140,18 @@ def validate(model: nn.Module, val_dataloader: DataLoader, criterion, metric=Non
     return losses.avg, metric_scores.avg
 
 
-def save_checkpoint(state: dict, is_best: bool, filename="model_checkpoint.pth.tar"):
+def save_checkpoint(state: dict, is_best: bool, config: dict, filename="model_checkpoint.pth.tar"):
     """
     saves model to a file
     :param state: state dict
     :param is_best:
     :param filename:
+    :param config: config dict with all training information and hyperparams
     :return: None
     """
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, "model_best.pth.tar")
+        shutil.copyfile(filename, f"model_best_{config['model_name']}.pth.tar")
 
 
 def load_checkpoint(model, optimizer, path):
@@ -202,3 +204,109 @@ def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) 
         is_best = val_loss < best_score
         best_score = min(val_loss, best_score)
     return best_score, is_best
+
+
+def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer, config: dict, losses):
+    """
+    Train function for a single epoch of the training loop.
+
+    :param epoch: the specific epoch on which the function is called
+    :param train_loader: torch Dataloader used to feed the data to the model
+    :param model: model to be trained
+    :param criterion: loss function based on which the model learns
+    :param optimizer: optimizer of the model
+    :param config: dict with all the necessary train params
+    :return: loss on the current epoch
+    """
+
+    loss_epoch = 0
+    # tqdm_iter = tqdm(train_loader, total=len(train_loader))
+    # Total train loader is huge, he're we limiting to steps per epoch
+    tqdm_iter = tqdm(train_loader, total=config["steps_per_epoch"])
+
+    tqdm_iter.set_description(f"Epoch {epoch}")
+    for step, batch in enumerate(tqdm_iter):
+        optimizer.zero_grad()
+        x_i = batch["image"][0].cuda(non_blocking=True)
+        x_j = batch["image"][1].cuda(non_blocking=True)
+
+        # positive pair, with encoding
+        h_i, h_j, z_i, z_j = model(x_i, x_j)
+
+        loss = criterion(z_i, z_j)
+        loss.backward()
+
+        optimizer.step()
+
+        tqdm_iter.set_postfix(iter_loss=loss.item())
+
+        # loss_epoch += loss.item()
+        losses.update(loss.item(), batch["image"][0].shape(0))
+        if step >= config["steps_per_epoch"]:
+            break
+
+    return loss_epoch
+
+
+def train(
+    model: nn.Module, config: dict, optimizer, scheduler, criterion, train_loader, neptune_run
+):
+
+    """
+    Main train function for the ResNet-SimCLR model.
+
+    :param model: torch model that needs to be trained
+    :param config: dict with all the necessary parameters for training
+    :param optimizer: optimizer of the model to be trained
+    :param scheduler: scheduler
+    :param criterion: loss function on which the model is trained
+    :param train_loader: torch Dataloader used to feed data to the model
+    :param neptune_run: neptune.ai instance used to keep track of params and stats of
+                        the model
+    :return:
+    """
+    neptune_run["parameters"] = config
+    losses = AverageMeter()
+
+    best_train_loss = 1e9  # big number
+    for epoch in range(config["epochs"]):
+        losses.reset()
+        # lr = optimizer.param_groups[0]['lr']
+        train_epoch(epoch, train_loader, model, criterion, optimizer, config, losses)
+        neptune_run["train/loss"].log(losses.avg)
+        print(f"Loss on epoch {epoch}: {losses.avg}")
+
+        if scheduler:
+            scheduler.step()
+
+        if losses.avg < best_train_loss:
+            save_checkpoint(
+                model.state_dict(),
+                True,
+                config,
+                filename=f"{config['checkpoint_filename']}{epoch}.pth.tar",
+            )
+            best_train_loss = losses.avg
+        else:
+            save_checkpoint(
+                model.state_dict(),
+                False,
+                config,
+                filename=f"{config['checkpoint_filename']}{epoch}.pth.tar",
+            )
+            best_train_loss = losses.avg
+
+    if losses.avg < best_train_loss:
+        save_checkpoint(
+            model.state_dict(),
+            True,
+            config,
+            filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar",
+        )
+    else:
+        save_checkpoint(
+            model.state_dict(),
+            False,
+            config,
+            filename=f"{config['checkpoint_filename']}{config['epochs']}.pth.tar",
+        )
