@@ -206,7 +206,7 @@ def _compute_best_val_score(best_score, val_loss, val_score, validation_metric) 
     return best_score, is_best
 
 
-def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer, config: dict):
+def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer, config: dict, losses):
     """
     Train function for a single epoch of the training loop.
 
@@ -240,7 +240,8 @@ def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer
 
         tqdm_iter.set_postfix(iter_loss=loss.item())
 
-        loss_epoch += loss.item()
+        # loss_epoch += loss.item()
+        losses.update(loss.item(), batch.size(0))
         if step >= config["steps_per_epoch"]:
             break
 
@@ -265,13 +266,15 @@ def train(
     :return:
     """
     neptune_run["parameters"] = config
+    losses = AverageMeter()
 
     best_train_loss = 1e9  # big number
     for epoch in range(config["epochs"]):
+        losses.reset()
         # lr = optimizer.param_groups[0]['lr']
-        loss_epoch = train_epoch(epoch, train_loader, model, criterion, optimizer, config)
-        neptune_run["train/loss"].log(loss_epoch)
-        print(f"Loss on epoch {epoch}: {loss_epoch}")
+        train_epoch(epoch, train_loader, model, criterion, optimizer, config, losses)
+        neptune_run["train/loss"].log(losses.avg)
+        print(f"Loss on epoch {epoch}: {losses.avg}")
 
         if scheduler:
             scheduler.step()
