@@ -241,7 +241,7 @@ def train_epoch(epoch: int, train_loader, model: nn.Module, criterion, optimizer
         tqdm_iter.set_postfix(iter_loss=loss.item())
 
         # loss_epoch += loss.item()
-        losses.update(loss.item(), batch.size(0))
+        losses.update(loss.item(), batch["image"][0].shape(0))
         if step >= config["steps_per_epoch"]:
             break
 
@@ -279,14 +279,14 @@ def train(
         if scheduler:
             scheduler.step()
 
-        if loss_epoch < best_train_loss:
+        if losses.avg < best_train_loss:
             save_checkpoint(
                 model.state_dict(),
                 True,
                 config,
                 filename=f"{config['checkpoint_filename']}{epoch}.pth.tar",
             )
-            best_train_loss = loss_epoch
+            best_train_loss = losses.avg
         else:
             save_checkpoint(
                 model.state_dict(),
@@ -294,9 +294,9 @@ def train(
                 config,
                 filename=f"{config['checkpoint_filename']}{epoch}.pth.tar",
             )
-            best_train_loss = loss_epoch
+            best_train_loss = losses.avg
 
-    if loss_epoch < best_train_loss:
+    if losses.avg < best_train_loss:
         save_checkpoint(
             model.state_dict(),
             True,
